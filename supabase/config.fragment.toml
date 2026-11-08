@@ -1,12 +1,12 @@
-# Merge these into your supabase/config.toml.
-# Functions verify the FIREBASE token themselves, so Supabase's own JWT check is turned off.
-[functions.sync-profile]
-verify_jwt = false
+# Merge into supabase/config.toml. Each function verifies the Supabase Auth token itself
+# (see _shared/auth.ts), so the gateway JWT check is off. The webhook is called by ToyyibPay, not a signed-in user.
 [functions.create-checkout]
 verify_jwt = false
 [functions.reveal-delivery]
 verify_jwt = false
+[functions.admin-fulfil]
+verify_jwt = false
 [functions.admin-add-inventory]
 verify_jwt = false
-[functions.toyyibpay-webhook]   # called by ToyyibPay, not by a signed-in user
+[functions.toyyibpay-webhook]
 verify_jwt = false

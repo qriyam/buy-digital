@@ -3,11 +3,13 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Menu, Search, ShoppingCart, X } from "lucide-react";
 import Logo from "./Logo";
 import { useCart } from "../lib/cart";
+import { useAuth } from "../lib/auth";
 
 const nav = [["/", "Home"], ["/products", "Products"], ["/categories", "Categories"], ["/about", "About"], ["/contact", "Contact"]] as const;
 
 export default function Header() {
   const { count } = useCart();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const go = useNavigate();
@@ -29,7 +31,7 @@ export default function Header() {
             <ShoppingCart className="h-5 w-5" aria-hidden />
             {count > 0 && <span className="absolute -right-0.5 -top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-brand px-1 text-[11px] font-semibold text-white">{count}</span>}
           </Link>
-          <Link to="/login" className="btn btn-primary hidden md:inline-flex">Login / Sign Up</Link>
+          <Link to={user ? "/account" : "/login"} className="btn btn-primary hidden md:inline-flex">{user ? "My Account" : "Login / Sign Up"}</Link>
           <button className="rounded-xl p-2 hover:bg-soft md:hidden" onClick={() => setOpen(!open)} aria-expanded={open} aria-label="Menu">{open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
         </div>
       </div>
@@ -41,7 +43,7 @@ export default function Header() {
           </form>
           <div className="flex flex-col gap-1">
             {nav.map(([to, label]) => <NavLink key={to} to={to} end={to === "/"} onClick={() => setOpen(false)} className={(s) => `rounded-lg px-2 py-2.5 ${link(s)}`}>{label}</NavLink>)}
-            <Link to="/login" onClick={() => setOpen(false)} className="btn btn-primary mt-2">Login / Sign Up</Link>
+            <Link to={user ? "/account" : "/login"} onClick={() => setOpen(false)} className="btn btn-primary mt-2">{user ? "My Account" : "Login / Sign Up"}</Link>
           </div>
         </div>
       )}

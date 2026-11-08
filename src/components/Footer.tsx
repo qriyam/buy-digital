@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import Logo from "./Logo";
-import { categories } from "../data/catalog";
+import { useCatalog } from "../lib/catalog";
 export default function Footer() {
+  const { categories } = useCatalog();
   const h = "mb-3 text-sm font-semibold";
   const l = "block py-1 text-sm text-mute hover:text-brand";
   return (

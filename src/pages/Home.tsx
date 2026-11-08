@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Headphones, ShieldCheck, Zap, BadgeCheck } from "lucide-react";
-import { categories, products } from "../data/catalog";
+import { useCatalog } from "../lib/catalog";
 import { Icon } from "../lib/icons";
 import ProductCard from "../components/ProductCard";
 
@@ -13,6 +13,7 @@ const why = [
 ] as const;
 
 export default function Home() {
+  const { categories, products, loading, demo } = useCatalog();
   const count = (slug: string) => products.filter((p) => p.category === slug).length;
   return (
     <>
@@ -53,7 +54,7 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-4 py-10">
         <div className="flex items-end justify-between"><h2 className="text-2xl font-bold tracking-tight">Popular products</h2><Link to="/products" className="text-sm font-medium text-brand">View all</Link></div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{products.filter((p) => p.featured).map((p) => <ProductCard key={p.slug} p={p} />)}</div>
-        <p className="mt-4 text-xs text-mute">Prices shown are placeholders for demonstration and are managed by the store admin.</p>
+        <p className="mt-4 text-xs text-mute">{demo ? "Demo mode: these prices are placeholders, not real offers." : loading ? "Loading products…" : "Prices are set by the store."}</p>
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-10">

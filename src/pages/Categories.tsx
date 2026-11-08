@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import { categories, products } from "../data/catalog";
+import { useCatalog } from "../lib/catalog";
 import { Icon } from "../lib/icons";
 export default function Categories() {
+  const { categories, products } = useCatalog();
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <h1 className="text-3xl font-bold tracking-tight">Categories</h1>

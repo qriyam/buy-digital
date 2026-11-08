@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import { Trash2 } from "lucide-react";
-import { getProduct } from "../data/catalog";
+import { useCatalog } from "../lib/catalog";
 import { rm } from "../lib/format";
 import { useCart } from "../lib/cart";
 export default function Cart() {
   const { lines, subtotal, setQty, remove } = useCart();
+  const { getProduct } = useCatalog();
   if (!lines.length) return <div className="mx-auto max-w-6xl px-4 py-24 text-center"><h1 className="text-2xl font-bold">Your cart is empty</h1><Link to="/products" className="btn btn-primary mt-6">Continue Shopping</Link></div>;
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">

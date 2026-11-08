@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { Zap } from "lucide-react";
-import { fromPrice, getCategory, type Product } from "../data/catalog";
+import { fromPrice, type Product } from "../data/catalog";
+import { useCatalog } from "../lib/catalog";
 import { rm } from "../lib/format";
 export default function ProductCard({ p }: { p: Product }) {
+  const { getCategory } = useCatalog();
   return (
     <Link to={`/products/${p.slug}`} className="card group flex flex-col p-4 transition hover:border-brand/40 hover:shadow-sm">
       <div className="mb-4 grid h-28 place-items-center rounded-xl bg-soft text-3xl font-bold text-brand">{p.name[0]}</div>

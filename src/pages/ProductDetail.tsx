@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { getCategory, getProduct, products } from "../data/catalog";
+import { useCatalog } from "../lib/catalog";
 import { rm } from "../lib/format";
 import { useCart } from "../lib/cart";
 import ProductCard from "../components/ProductCard";
@@ -8,11 +8,13 @@ import NotFound from "./NotFound";
 
 export default function ProductDetail() {
   const { slug = "" } = useParams();
+  const { getProduct, getCategory, products, loading } = useCatalog();
   const p = getProduct(slug);
   const { add } = useCart();
   const go = useNavigate();
   const [vid, setVid] = useState(p?.variants[0].id ?? "");
   const [qty, setQty] = useState(1);
+  if (loading) return <p className="py-24 text-center text-mute">Loading…</p>;
   if (!p) return <NotFound what="Product" />;
   const variant = p.variants.find((v) => v.id === vid) ?? p.variants[0];
   const put = (then?: string) => { add({ slug: p.slug, variantId: variant.id, qty }); if (then) go(then); };

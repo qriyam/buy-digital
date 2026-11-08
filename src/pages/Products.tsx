@@ -1,9 +1,11 @@
 import { useMemo } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { categories, fromPrice, getCategory, products } from "../data/catalog";
+import { fromPrice } from "../data/catalog";
+import { useCatalog } from "../lib/catalog";
 import ProductCard from "../components/ProductCard";
 
 export default function Products() {
+  const { categories, products, getCategory, loading } = useCatalog();
   const { slug } = useParams();
   const [sp, setSp] = useSearchParams();
   const q = sp.get("q") ?? "", sort = sp.get("sort") ?? "popular", cat = slug ?? sp.get("category") ?? "", avail = sp.get("available") === "1";
@@ -15,7 +17,7 @@ export default function Products() {
     if (sort === "low") out.sort((a, b) => fromPrice(a) - fromPrice(b));
     if (sort === "high") out.sort((a, b) => fromPrice(b) - fromPrice(a));
     return out;
-  }, [q, sort, cat, avail]);
+  }, [q, sort, cat, avail, products, getCategory]);
   const sel = "rounded-xl border border-line bg-white px-3 py-2 text-sm";
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -26,7 +28,7 @@ export default function Products() {
         <select value={sort} onChange={(e) => set("sort", e.target.value)} className={sel} aria-label="Sort"><option value="popular">Popular</option><option value="low">Price: Low to High</option><option value="high">Price: High to Low</option></select>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={avail} onChange={(e) => set("available", e.target.checked ? "1" : "")} />In stock only</label>
       </div>
-      {list.length === 0 ? <p className="mt-16 text-center text-mute">No products match your search.</p> :
+      {loading ? <p className="mt-16 text-center text-mute">Loading…</p> : list.length === 0 ? <p className="mt-16 text-center text-mute">No products match your search.</p> :
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{list.map((p) => <ProductCard key={p.slug} p={p} />)}</div>}
     </div>
   );

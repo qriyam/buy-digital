@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { getProduct } from "../data/catalog";
+import { useCatalog } from "./catalog";
 
 export type Line = { slug: string; variantId: string; qty: number };
 type Ctx = { lines: Line[]; count: number; subtotal: number; add: (l: Line) => void; setQty: (slug: string, variantId: string, qty: number) => void; remove: (slug: string, variantId: string) => void; clear: () => void };
@@ -7,6 +7,7 @@ const C = createContext<Ctx | null>(null);
 const KEY = "buydigital.cart.v1";
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { getProduct } = useCatalog();
   const [lines, setLines] = useState<Line[]>(() => { try { return JSON.parse(localStorage.getItem(KEY) ?? "[]"); } catch { return []; } });
   useEffect(() => { try { localStorage.setItem(KEY, JSON.stringify(lines)); } catch { /* storage unavailable */ } }, [lines]);
   const same = (a: Line, s: string, v: string) => a.slug === s && a.variantId === v;
@@ -19,7 +20,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setQty: (s, v, q) => setLines((ls) => ls.map((x) => same(x, s, v) ? { ...x, qty: Math.max(1, Math.min(q, 10)) } : x)),
     remove: (s, v) => setLines((ls) => ls.filter((x) => !same(x, s, v))),
     clear: () => setLines([]),
-  }), [lines]);
+  }), [lines, getProduct]);
   return <C.Provider value={value}>{children}</C.Provider>;
 }
 export const useCart = () => { const c = useContext(C); if (!c) throw new Error("CartProvider missing"); return c; };
