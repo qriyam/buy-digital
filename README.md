@@ -1,5 +1,7 @@
 # BuyDigital
 
+বাংলা গাইড: [README.bn.md](README.bn.md)
+
 Digital products store for Malaysia (MYR). React + TypeScript + Vite + Tailwind, Supabase backend, ToyyibPay payments. English and Bahasa Malaysia storefront.
 
 ## What is built
