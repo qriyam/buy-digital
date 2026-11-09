@@ -26,7 +26,7 @@ export default function Checkout() {
   const pay = async () => {
     if (busy) return; setBusy(true); setErr(null);   // blocks double submit
     try {
-      const r = await callFn<{ payment_url: string }>("create-checkout", { items: lines.map((l) => ({ variant_id: l.variantId, quantity: l.qty })), coupon_code: getCoupon() || undefined });
+      const r = await callFn<{ payment_url: string }>("buydigital-create-checkout", { items: lines.map((l) => ({ variant_id: l.variantId, quantity: l.qty })), coupon_code: getCoupon() || undefined });
       window.location.assign(r.payment_url);   // payment is confirmed by the server-side webhook, never by this redirect
     } catch (e) { setErr(errors[(e as Error).message] ?? "Something went wrong. Please try again."); setBusy(false); }
   };

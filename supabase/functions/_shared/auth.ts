@@ -13,8 +13,15 @@ export async function authed(req: Request): Promise<Me> {
 }
 
 export async function profileFor(uid: string) {
-  const { data } = await db.from("profiles").select("id,email,full_name,phone,status").eq("id", uid).maybeSingle();
-  if (!data) throw new HttpError(403, "no_profile");
+  const read = () => db.from("profiles").select("id,email,full_name,phone,status").eq("id", uid).maybeSingle();
+  let { data } = await read();
+  if (!data) {   // the browser normally creates it via ensure_profile(); this covers any gap
+    const u = await db.auth.admin.getUserById(uid);
+    if (!u.data.user) throw new HttpError(403, "no_profile");
+    await db.from("profiles").upsert({ id: uid, email: u.data.user.email ?? "", full_name: u.data.user.user_metadata?.full_name ?? null }, { onConflict: "id", ignoreDuplicates: true });
+    data = (await read()).data;
+    if (!data) throw new HttpError(403, "no_profile");
+  }
   if (data.status !== "active") throw new HttpError(403, "account_suspended");
   return data as { id: string; email: string; full_name: string | null; phone: string | null; status: string };
 }

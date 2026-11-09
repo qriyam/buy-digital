@@ -1,4 +1,4 @@
-// Sends through Resend when RESEND_API_KEY is set; otherwise logs and returns false (nothing is pretended).
+// Sends through Resend when BUYDIGITAL_RESEND_API_KEY is set; otherwise logs and returns false (nothing is pretended).
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
 export function template(title: string, body: string, ctaUrl?: string, ctaLabel = "View order") {
@@ -10,11 +10,11 @@ export function template(title: string, body: string, ctaUrl?: string, ctaLabel 
 }
 
 export async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
-  const key = Deno.env.get("RESEND_API_KEY");
-  if (!key) { console.warn("RESEND_API_KEY not set; email not sent"); return false; }
+  const key = Deno.env.get("BUYDIGITAL_RESEND_API_KEY");
+  if (!key) { console.warn("BUYDIGITAL_RESEND_API_KEY not set; email not sent"); return false; }
   const r = await fetch("https://api.resend.com/emails", {
     method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: Deno.env.get("EMAIL_FROM") ?? "BuyDigital <support@buydigital.my>", to, subject, html }),
+    body: JSON.stringify({ from: Deno.env.get("BUYDIGITAL_EMAIL_FROM") ?? "BuyDigital <support@buydigital.my>", to, subject, html }),
   });
   if (!r.ok) console.error("resend failed", r.status);
   return r.ok;

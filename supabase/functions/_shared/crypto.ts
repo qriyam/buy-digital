@@ -6,16 +6,16 @@ const hex = (u: ArrayBuffer) => [...new Uint8Array(u)].map((x) => x.toString(16)
 let aes: CryptoKey | undefined, mac: CryptoKey | undefined;
 async function aesKey() {
   if (!aes) {
-    const raw = unb64(Deno.env.get("INVENTORY_ENC_KEY") ?? "");
-    if (raw.length !== 32) throw new Error("INVENTORY_ENC_KEY must be 32 bytes, base64");
+    const raw = unb64(Deno.env.get("BUYDIGITAL_INVENTORY_ENC_KEY") ?? "");
+    if (raw.length !== 32) throw new Error("BUYDIGITAL_INVENTORY_ENC_KEY must be 32 bytes, base64");
     aes = await crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
   }
   return aes;
 }
 async function macKey() {
   if (!mac) {
-    const k = Deno.env.get("INVENTORY_HASH_KEY");
-    if (!k || k.length < 32) throw new Error("INVENTORY_HASH_KEY too short");
+    const k = Deno.env.get("BUYDIGITAL_INVENTORY_HASH_KEY");
+    if (!k || k.length < 32) throw new Error("BUYDIGITAL_INVENTORY_HASH_KEY too short");
     mac = await crypto.subtle.importKey("raw", new TextEncoder().encode(k), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   }
   return mac;

@@ -34,6 +34,6 @@ serve(async (req) => {
   await db.from("notifications").insert({ user_id: o.user_id, title: to === "refunded" ? "Refund recorded" : "Order cancelled", body: `Order ${o.order_number}: ${reason}` });
   await audit(me.uid, `order_${b.action}`, "order", o.id, { reason, from: o.status });
   await sendEmail(o.email, `BuyDigital order ${o.order_number} ${to}`, template(to === "refunded" ? "Your refund is recorded" : "Your order was cancelled",
-    `Order ${o.order_number}: ${reason}`, `${Deno.env.get("SITE_URL")}/account/orders/${o.id}`));
+    `Order ${o.order_number}: ${reason}`, `${Deno.env.get("BUYDIGITAL_SITE_URL")}/account/orders/${o.id}`));
   return { ok: true, status: to };
 });

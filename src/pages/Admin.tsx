@@ -42,7 +42,7 @@ export function AdminOrders() {
   }, [q, status]);
   const fulfil = async (e: FormEvent<HTMLFormElement>, id: string) => {
     e.preventDefault(); const note = String(new FormData(e.currentTarget).get("n") ?? "");
-    try { await callFn("admin-fulfil", { delivery_id: id, note }); setMsg("Delivered."); reload(); } catch (x) { setMsg(`Failed: ${(x as Error).message}`); }
+    try { await callFn("buydigital-admin-fulfil", { delivery_id: id, note }); setMsg("Delivered."); reload(); } catch (x) { setMsg(`Failed: ${(x as Error).message}`); }
   };
   return (
     <div><H>Orders</H><Err e={error} />
@@ -64,7 +64,7 @@ export function AdminInventory() {
   const count = (v: string, s: string) => (inv.data ?? []).filter((i: any) => i.variant_id === v && i.status === s).length;
   const upload = async (e: FormEvent) => {
     e.preventDefault(); if (busy || !variant) return; setBusy(true);
-    try { const r = await callFn<{ added: number; duplicates: number }>("admin-add-inventory", { variant_id: variant, codes: codes.split(/\r?\n/) }); setMsg(`Added ${r.added}, skipped ${r.duplicates} duplicates.`); setCodes(""); inv.reload(); }
+    try { const r = await callFn<{ added: number; duplicates: number }>("buydigital-admin-add-inventory", { variant_id: variant, codes: codes.split(/\r?\n/) }); setMsg(`Added ${r.added}, skipped ${r.duplicates} duplicates.`); setCodes(""); inv.reload(); }
     catch (x) { setMsg(`Failed: ${(x as Error).message}`); } setBusy(false);
   };
   return (

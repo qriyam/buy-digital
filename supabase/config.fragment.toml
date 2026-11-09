@@ -1,22 +1,23 @@
-# Merge into supabase/config.toml. Each function verifies the Supabase Auth token itself
-# (see _shared/auth.ts), so the gateway JWT check is off. The webhook is called by ToyyibPay, not a signed-in user.
-[functions.create-checkout]
+# Merge into supabase/config.toml. Every BuyDigital function is prefixed "buydigital-" so it cannot clash with other sites in the same project.
+# Each function verifies the Supabase Auth token itself (see _shared/auth.ts), so the gateway JWT check is off.
+# The webhook is called by ToyyibPay, not by a signed-in user.
+[functions.buydigital-create-checkout]
 verify_jwt = false
-[functions.reveal-delivery]
+[functions.buydigital-quote-cart]
 verify_jwt = false
-[functions.admin-fulfil]
+[functions.buydigital-toyyibpay-webhook]
 verify_jwt = false
-[functions.admin-add-inventory]
+[functions.buydigital-reveal-delivery]
 verify_jwt = false
-[functions.toyyibpay-webhook]
+[functions.buydigital-get-download]
 verify_jwt = false
-[functions.quote-cart]
+[functions.buydigital-admin-add-inventory]
 verify_jwt = false
-[functions.get-download]
+[functions.buydigital-admin-fulfil]
 verify_jwt = false
-[functions.admin-order-action]
+[functions.buydigital-admin-order-action]
 verify_jwt = false
-[functions.admin-users]
+[functions.buydigital-admin-users]
 verify_jwt = false
-[functions.admin-notify]
+[functions.buydigital-admin-notify]
 verify_jwt = false

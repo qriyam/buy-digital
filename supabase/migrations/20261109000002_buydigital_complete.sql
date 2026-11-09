@@ -1,3 +1,4 @@
+set search_path = buydigital, public;
 -- Completes the store: file delivery, real stock availability, verified-buyer reviews, storage policies, editable site content.
 
 alter table product_variants add column file_path text, add column download_limit int check (download_limit is null or download_limit > 0),
@@ -26,7 +27,7 @@ create policy rev_write on product_reviews for insert with check (
 
 -- Automatic file delivery: one delivery row per purchased file, with download limit and expiry
 create or replace function fulfil_file_items(p_order uuid) returns int
-language plpgsql security definer set search_path = public as $$
+language plpgsql security definer set search_path = buydigital, public as $$
 declare n int;
 begin
   if not exists (select 1 from orders where id = p_order and status in ('paid','processing','delivered','completed')) then raise exception 'order_not_paid'; end if;
@@ -40,7 +41,7 @@ end $$;
 revoke all on function fulfil_file_items from public, anon, authenticated;
 
 -- Tell the customer when support replies
-create or replace function notify_ticket_reply() returns trigger language plpgsql security definer set search_path = public as $$
+create or replace function notify_ticket_reply() returns trigger language plpgsql security definer set search_path = buydigital, public as $$
 declare t record;
 begin
   if new.is_staff then
@@ -51,10 +52,10 @@ end $$;
 create trigger support_reply_notify after insert on support_messages for each row execute function notify_ticket_reply();
 
 -- Storage: public product images are admin-written; private files are admin-written and only ever served via signed URLs
-create policy img_admin_write on storage.objects for insert with check (bucket_id in ('product-images','product-files') and is_admin());
-create policy img_admin_update on storage.objects for update using (bucket_id in ('product-images','product-files') and is_admin());
-create policy img_admin_delete on storage.objects for delete using (bucket_id in ('product-images','product-files') and is_admin());
-create policy files_admin_read on storage.objects for select using (bucket_id = 'product-files' and is_admin());
+create policy buydigital_img_admin_write on storage.objects for insert with check (bucket_id in ('buydigital-product-images','buydigital-product-files') and is_admin());
+create policy buydigital_img_admin_update on storage.objects for update using (bucket_id in ('buydigital-product-images','buydigital-product-files') and is_admin());
+create policy buydigital_img_admin_delete on storage.objects for delete using (bucket_id in ('buydigital-product-images','buydigital-product-files') and is_admin());
+create policy buydigital_files_admin_read on storage.objects for select using (bucket_id = 'buydigital-product-files' and is_admin());
 
 -- Editable site content (public keys are readable by everyone). Policy texts are starting points: have them reviewed before launch.
 insert into website_settings (key, value, is_public) values
@@ -74,12 +75,8 @@ What if something goes wrong? Open a support ticket from your account and quote 
  ('page_delivery', to_jsonb('Delivery is digital. License codes and downloadable files are made available in your account as soon as payment is verified. Items fulfilled by our team show an estimated time on the product page. You can follow progress in My Orders. We will notify you by email and in your account when your order is delivered.'::text), true)
 on conflict (key) do nothing;
 
--- Welcome notification on registration
-create or replace function handle_new_user() returns trigger language plpgsql security definer set search_path = public as $$
-begin
-  insert into profiles (id, email, full_name, phone)
-  values (new.id, coalesce(new.email, ''), nullif(new.raw_user_meta_data->>'full_name',''), nullif(new.raw_user_meta_data->>'phone',''))
-  on conflict (id) do nothing;
-  insert into notifications (user_id, title, body) values (new.id, 'Welcome to BuyDigital', 'Your account is ready. Verify your email to place orders.');
-  return new;
-end $$;
+
+-- Make sure the server role can use everything created above
+grant all on all tables in schema buydigital to service_role;
+grant all on all sequences in schema buydigital to service_role;
+grant execute on all functions in schema buydigital to service_role;

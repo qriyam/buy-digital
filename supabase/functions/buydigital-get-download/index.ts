@@ -21,7 +21,7 @@ serve(async (req) => {
   const { data: claimed } = await db.from("deliveries").update({ download_count: d.download_count + 1 }).eq("id", d.id).eq("download_count", d.download_count).select("id");
   if (!claimed?.length) throw new HttpError(409, "try_again");
 
-  const { data: signed, error } = await db.storage.from("product-files").createSignedUrl(d.file_path, 60);
+  const { data: signed, error } = await db.storage.from("buydigital-product-files").createSignedUrl(d.file_path, 60);
   if (error || !signed) { await db.from("deliveries").update({ download_count: d.download_count }).eq("id", d.id); throw new HttpError(502, "storage_error"); }
   await audit(profile.id, "download_file", "delivery", d.id, { order_id: d.order_id });
   return { url: signed.signedUrl };

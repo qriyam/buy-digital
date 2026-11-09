@@ -67,15 +67,15 @@ export function AdminProductForm() {
     if (!file || isNew) return;
     if (!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 2_000_000) { setMsg("Images must be PNG, JPEG or WebP under 2 MB."); return; }
     const path = `${id}/${Date.now()}-${safe(file.name)}`;
-    const up = await db().storage.from("product-images").upload(path, file, { contentType: file.type });
+    const up = await db().storage.from("buydigital-product-images").upload(path, file, { contentType: file.type });
     if (up.error) { setMsg("Upload failed."); return; }
     await db().from("product_images").insert({ product_id: id, path, sort_order: (loaded.data?.im.length ?? 0) }); loaded.reload();
   };
-  const removeImage = async (im: any) => { await db().storage.from("product-images").remove([im.path]); await db().from("product_images").delete().eq("id", im.id); loaded.reload(); };
+  const removeImage = async (im: any) => { await db().storage.from("buydigital-product-images").remove([im.path]); await db().from("product_images").delete().eq("id", im.id); loaded.reload(); };
   const uploadFile = async (i: number, file: File | undefined) => {
     if (!file || isNew) return; if (file.size > 50_000_000) { setMsg("Files must be under 50 MB."); return; }
     const path = `${id}/${Date.now()}-${safe(file.name)}`;
-    const up = await db().storage.from("product-files").upload(path, file); if (up.error) { setMsg("File upload failed."); return; }
+    const up = await db().storage.from("buydigital-product-files").upload(path, file); if (up.error) { setMsg("File upload failed."); return; }
     setV(i, { file_path: path }); setMsg("File uploaded. Save to attach it.");
   };
   const archive = async () => { if (!confirm("Archive this product? It disappears from the store but past orders keep working.")) return; await db().from("products").update({ archived_at: new Date().toISOString(), is_active: false }).eq("id", id); go("/admin/products"); };
@@ -113,7 +113,7 @@ export function AdminProductForm() {
       <button type="button" className="btn btn-ghost mt-3" onClick={() => setVs([...variants, blankV(variants.length)])}>Add option</button>
 
       {!isNew && <><h2 className="mt-8 font-semibold">Images</h2><div className="mt-3 flex flex-wrap gap-3">{(loaded.data?.im ?? []).map((im: any) => (
-        <div key={im.id} className="text-center text-xs"><img src={db().storage.from("product-images").getPublicUrl(im.path).data.publicUrl} alt="" className="h-20 w-20 rounded-lg border border-line object-contain" />
+        <div key={im.id} className="text-center text-xs"><img src={db().storage.from("buydigital-product-images").getPublicUrl(im.path).data.publicUrl} alt="" className="h-20 w-20 rounded-lg border border-line object-contain" />
           <button type="button" className="mt-1 text-brand" onClick={() => removeImage(im)}>Remove</button></div>))}</div>
         <input type="file" accept="image/png,image/jpeg,image/webp" className="mt-3 text-sm" onChange={(e) => uploadImage(e.target.files?.[0])} /></>}
       {isNew && <p className="mt-6 text-sm text-mute">Save first, then add images and files.</p>}

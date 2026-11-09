@@ -73,8 +73,8 @@ serve(async (req) => {
       bill = await createBill({
         name: profile.full_name ?? profile.email.split("@")[0], email: profile.email, phone: profile.phone ?? "",
         amountSen: total, description: `BuyDigital order ${order.order_number}`, reference: order.order_number,
-        callbackUrl: `${Deno.env.get("SUPABASE_URL")}/functions/v1/toyyibpay-webhook`,
-        returnUrl: `${Deno.env.get("SITE_URL")}/account/orders/${order.id}`,
+        callbackUrl: `${Deno.env.get("SUPABASE_URL")}/functions/v1/buydigital-toyyibpay-webhook`,
+        returnUrl: `${Deno.env.get("BUYDIGITAL_SITE_URL")}/account/orders/${order.id}`,
       });
     } catch (e) { console.error(e); throw new HttpError(502, "payment_provider_error"); }
 

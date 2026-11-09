@@ -23,7 +23,7 @@ export function useQuote() {
   const key = lines.map((l) => l.variantId + l.qty).join(",");
   const run = async (coupon: string) => {
     if (!user || !lines.length) { setQuote(null); return; }
-    try { setQuote(await callFn<Quote>("quote-cart", { items: lines.map((l) => ({ variant_id: l.variantId, quantity: l.qty })), coupon_code: coupon || undefined })); setErr(null); }
+    try { setQuote(await callFn<Quote>("buydigital-quote-cart", { items: lines.map((l) => ({ variant_id: l.variantId, quantity: l.qty })), coupon_code: coupon || undefined })); setErr(null); }
     catch (e) { setQuote(null); setErr(couponErrors[(e as Error).message] ?? "Could not price your cart."); if (coupon) try { sessionStorage.removeItem("bd.coupon"); } catch { /* ignore */ } }
   };
   useEffect(() => { run(getCoupon()); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [key, user?.id]);

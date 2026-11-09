@@ -1,6 +1,6 @@
 // ToyyibPay adapter. VERIFY field names against https://toyyibpay.com/apireference/ in the sandbox first.
 // Sandbox: https://dev.toyyibpay.com   Live: https://toyyibpay.com
-const host = () => Deno.env.get("TOYYIBPAY_SANDBOX") === "true" ? "https://dev.toyyibpay.com" : "https://toyyibpay.com";
+const host = () => Deno.env.get("BUYDIGITAL_TOYYIBPAY_SANDBOX") === "true" ? "https://dev.toyyibpay.com" : "https://toyyibpay.com";
 
 export type Tx = {
   billpaymentStatus: string | number;     // 1 = success, 2/4 = pending, 3 = failed
@@ -14,8 +14,8 @@ export async function createBill(p: {
   reference: string; callbackUrl: string; returnUrl: string;
 }): Promise<{ billCode: string; url: string }> {
   const body = new URLSearchParams({
-    userSecretKey: Deno.env.get("TOYYIBPAY_SECRET_KEY")!,
-    categoryCode: Deno.env.get("TOYYIBPAY_CATEGORY_CODE")!,
+    userSecretKey: Deno.env.get("BUYDIGITAL_TOYYIBPAY_SECRET_KEY")!,
+    categoryCode: Deno.env.get("BUYDIGITAL_TOYYIBPAY_CATEGORY_CODE")!,
     billName: "BuyDigital order",                         // max 30 chars
     billDescription: p.description.slice(0, 100),
     billPriceSetting: "1",                                // fixed amount
@@ -25,7 +25,7 @@ export async function createBill(p: {
     billCallbackUrl: p.callbackUrl,
     billExternalReferenceNo: p.reference,
     billTo: p.name, billEmail: p.email, billPhone: p.phone,
-    billPaymentChannel: Deno.env.get("TOYYIBPAY_PAYMENT_CHANNEL") ?? "0",  // 0 = FPX, 1 = card, 2 = both
+    billPaymentChannel: Deno.env.get("BUYDIGITAL_TOYYIBPAY_PAYMENT_CHANNEL") ?? "0",  // 0 = FPX, 1 = card, 2 = both
   });
   const r = await fetch(`${host()}/index.php/api/createBill`, { method: "POST", body });
   const j = await r.json().catch(() => null);

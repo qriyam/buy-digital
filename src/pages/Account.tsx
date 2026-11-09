@@ -54,14 +54,14 @@ export function Orders() {
 
 function Reveal({ id }: { id: string }) {
   const [code, setCode] = useState<string | null>(null), [err, setErr] = useState<string | null>(null), [busy, setBusy] = useState(false);
-  const show = async () => { if (busy) return; setBusy(true); setErr(null); try { setCode((await callFn<{ code: string }>("reveal-delivery", { delivery_id: id })).code); } catch { setErr("Could not load your code. Try again or contact support."); } setBusy(false); };
+  const show = async () => { if (busy) return; setBusy(true); setErr(null); try { setCode((await callFn<{ code: string }>("buydigital-reveal-delivery", { delivery_id: id })).code); } catch { setErr("Could not load your code. Try again or contact support."); } setBusy(false); };
   return code ? <code className="select-all rounded-lg bg-soft px-3 py-2 text-sm">{code}</code> : <><button className="btn btn-primary !py-2" onClick={show} disabled={busy}>Show code</button>{err && <span role="alert" className="ml-2 text-sm text-brand">{err}</span>}</>;
 }
 
 function Download({ id }: { id: string }) {
   const [err, setErr] = useState<string | null>(null), [busy, setBusy] = useState(false);
   const msgs: Record<string, string> = { download_limit_reached: "Download limit reached. Contact support.", download_expired: "This download has expired. Contact support.", order_not_active: "This order is no longer active." };
-  const go = async () => { if (busy) return; setBusy(true); setErr(null); try { window.location.assign((await callFn<{ url: string }>("get-download", { delivery_id: id })).url); } catch (e) { setErr(msgs[(e as Error).message] ?? "Could not start the download."); } setBusy(false); };
+  const go = async () => { if (busy) return; setBusy(true); setErr(null); try { window.location.assign((await callFn<{ url: string }>("buydigital-get-download", { delivery_id: id })).url); } catch (e) { setErr(msgs[(e as Error).message] ?? "Could not start the download."); } setBusy(false); };
   return <><button className="btn btn-primary !py-2" onClick={go} disabled={busy}>Download file</button>{err && <span role="alert" className="ml-2 text-sm text-brand">{err}</span>}</>;
 }
 

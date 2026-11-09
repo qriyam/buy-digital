@@ -6,7 +6,7 @@ type Ctx = { categories: Category[]; products: Product[]; loading: boolean; erro
   getProduct: (slug: string) => Product | undefined; getCategory: (slug: string) => Category | undefined; getByVariant: (id: string) => { product: Product; variant: Product["variants"][number] } | undefined };
 const C = createContext<Ctx | null>(null);
 const base = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
-export const imageUrl = (path: string) => `${base}/storage/v1/object/public/product-images/${path}`;
+export const imageUrl = (path: string) => `${base}/storage/v1/object/public/buydigital-product-images/${path}`;
 
 export function CatalogProvider({ children }: { children: ReactNode }) {
   const [categories, setCats] = useState<Category[]>([]), [products, setProducts] = useState<Product[]>([]);

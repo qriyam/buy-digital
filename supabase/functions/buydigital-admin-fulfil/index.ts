@@ -33,7 +33,7 @@ serve(async (req) => {
     await db.from("order_events").insert({ order_id: d.order_id, status: "delivered", message: "Your order has been delivered.", actor_id: me.uid });
     await db.from("notifications").insert({ user_id: d.user_id, title: "Order delivered", body: `Order ${order.order_number} is ready. Open it to see your delivery details.` });
     await sendEmail(order.email, `Your BuyDigital order ${order.order_number} is ready`,
-      template("Your order is ready", `Order ${order.order_number} has been delivered. Open it to see your delivery details.`, `${Deno.env.get("SITE_URL")}/account/orders/${d.order_id}`));
+      template("Your order is ready", `Order ${order.order_number} has been delivered. Open it to see your delivery details.`, `${Deno.env.get("BUYDIGITAL_SITE_URL")}/account/orders/${d.order_id}`));
   }
   return { ok: true, order_complete: true };
 });

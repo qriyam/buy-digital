@@ -2,7 +2,7 @@ export class HttpError extends Error {
   constructor(public status: number, public code: string) { super(code); }
 }
 
-const allowed = () => (Deno.env.get("ALLOWED_ORIGINS") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+const allowed = () => (Deno.env.get("BUYDIGITAL_ALLOWED_ORIGINS") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 
 function cors(req: Request): Record<string, string> {
   const origin = req.headers.get("origin") ?? "";

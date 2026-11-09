@@ -17,8 +17,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setAdmin] = useState(false);
   useEffect(() => {
     if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => { setUser(data.session?.user ?? null); setLoading(false); });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setUser(s?.user ?? null));
+    const ready = async (u: User | null) => { if (u) await supabase!.rpc("ensure_profile"); setUser(u); };   // creates this site's profile on first sign-in
+    supabase.auth.getSession().then(async ({ data }) => { await ready(data.session?.user ?? null); setLoading(false); });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => { const u = s?.user ?? null; setTimeout(() => { void ready(u); }, 0); });
     return () => sub.subscription.unsubscribe();
   }, []);
   useEffect(() => {   // UI hint only. Every admin action is re-checked on the server.

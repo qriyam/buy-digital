@@ -1,6 +1,14 @@
--- BuyDigital core schema. Money is numeric(12,2) in MYR. All writes to orders/payments/inventory
+-- Core schema. Money is numeric(12,2) in MYR. All writes to orders/payments/inventory
 -- happen in Edge Functions with the service role; customers only ever SELECT their own rows.
-create extension if not exists pgcrypto;
+-- BuyDigital lives in its own Postgres schema, "buydigital", so it can share one Supabase project with other
+-- websites without table, function or view names colliding. Nothing here touches the public schema or auth.users.
+-- After running, add "buydigital" to Settings > API > Exposed schemas in the Supabase dashboard.
+create schema if not exists buydigital;
+grant usage on schema buydigital to anon, authenticated, service_role;
+alter default privileges in schema buydigital grant all on tables to service_role;
+alter default privileges in schema buydigital grant all on sequences to service_role;
+alter default privileges in schema buydigital grant execute on functions to service_role;
+set search_path = buydigital, public;
 
 create or replace function set_updated_at() returns trigger language plpgsql as $$
 begin new.updated_at = now(); return new; end $$;
@@ -19,18 +27,25 @@ create table user_roles (
   primary key (user_id, role)
 );
 -- Role check reads the table, never user-editable metadata.
-create or replace function is_admin() returns boolean language sql stable security definer set search_path = public as $$
+create or replace function is_admin() returns boolean language sql stable security definer set search_path = buydigital, public as $$
   select exists (select 1 from user_roles where user_id = auth.uid() and role in ('admin','staff'));
 $$;
 
-create or replace function handle_new_user() returns trigger language plpgsql security definer set search_path = public as $$
+-- Profiles are created by the app after sign-in, not by a trigger on auth.users, so people who sign up on other
+-- websites in this project never get a BuyDigital profile. Safe to call repeatedly.
+create or replace function ensure_profile() returns void language plpgsql security definer set search_path = buydigital, public as $$
+declare u record;
 begin
+  if auth.uid() is null then raise exception 'login_required'; end if;
+  if exists (select 1 from profiles where id = auth.uid()) then return; end if;
+  select email, raw_user_meta_data from auth.users where id = auth.uid() into u;
   insert into profiles (id, email, full_name, phone)
-  values (new.id, coalesce(new.email, ''), nullif(new.raw_user_meta_data->>'full_name',''), nullif(new.raw_user_meta_data->>'phone',''))
+  values (auth.uid(), coalesce(u.email, ''), nullif(u.raw_user_meta_data->>'full_name',''), nullif(u.raw_user_meta_data->>'phone',''))
   on conflict (id) do nothing;
-  return new;
+  insert into notifications (user_id, title, body) values (auth.uid(), 'Welcome to BuyDigital', 'Your account is ready. Verify your email to place orders.');
 end $$;
-create trigger on_auth_user_created after insert on auth.users for each row execute function handle_new_user();
+revoke all on function ensure_profile from public, anon;
+grant execute on function ensure_profile to authenticated;
 
 -- ───────── catalogue ─────────
 create table categories (
@@ -175,7 +190,7 @@ do $$ declare t text; begin
 -- ───────── server-side logic ─────────
 -- Atomically reserve p_qty codes for an order line; raises insufficient_stock if short.
 create or replace function reserve_inventory(p_variant uuid, p_order_item uuid, p_qty int) returns void
-language plpgsql security definer set search_path = public as $$
+language plpgsql security definer set search_path = buydigital, public as $$
 declare got int;
 begin
   with pick as (
@@ -187,14 +202,14 @@ begin
   if got < p_qty then raise exception 'insufficient_stock'; end if;
 end $$;
 
-create or replace function release_expired_reservations() returns void language sql security definer set search_path = public as $$
+create or replace function release_expired_reservations() returns void language sql security definer set search_path = buydigital, public as $$
   update inventory_items set status = 'available', reserved_order_item_id = null, reserved_until = null
   where status = 'reserved' and reserved_until < now();
 $$;
 
 -- Returns true only the first time an event id is seen (webhook retries return false).
 create or replace function claim_payment_event(p_provider text, p_event text, p_payload jsonb, p_sig_ok boolean) returns boolean
-language plpgsql security definer set search_path = public as $$
+language plpgsql security definer set search_path = buydigital, public as $$
 declare n int;
 begin
   insert into payment_events (provider, event_id, payload, signature_valid) values (p_provider, p_event, p_payload, p_sig_ok) on conflict do nothing;
@@ -203,7 +218,7 @@ end $$;
 
 -- Idempotent: turns reserved codes into delivered codes for a paid order. Returns number of codes newly delivered.
 create or replace function fulfil_license_items(p_order uuid) returns int
-language plpgsql security definer set search_path = public as $$
+language plpgsql security definer set search_path = buydigital, public as $$
 declare r record; n int := 0; c int;
 begin
   if not exists (select 1 from orders where id = p_order and status in ('paid','processing','delivered','completed')) then
@@ -273,9 +288,9 @@ create policy audit_read on admin_audit_logs for select using (is_admin());
 -- inventory_items and payment_events: RLS on, no policies => no client access at all.
 
 -- column-level hardening
-revoke insert, update, delete on all tables in schema public from anon, authenticated;
+revoke insert, update, delete on all tables in schema buydigital from anon, authenticated;
 revoke update on profiles from authenticated; grant update (full_name, phone) on profiles to authenticated;
-grant select on all tables in schema public to anon, authenticated;
+grant select on all tables in schema buydigital to anon, authenticated;
 revoke select on inventory_items, payment_events from anon, authenticated;
 -- Re-grant the client writes that the policies above govern
 grant insert, update, delete on carts, cart_items to authenticated;
@@ -286,7 +301,7 @@ grant insert, update, delete on categories, products, product_images, product_va
 grant update (status) on product_reviews to authenticated;
 grant update (status, priority) on support_tickets to authenticated;
 -- Only admins may change an account's status (customers can update their own row, so guard the column)
-create or replace function guard_profile_status() returns trigger language plpgsql security definer set search_path = public as $$
+create or replace function guard_profile_status() returns trigger language plpgsql security definer set search_path = buydigital, public as $$
 begin
   if new.status is distinct from old.status and not is_admin() then raise exception 'forbidden_status_change'; end if;
   return new;
@@ -300,8 +315,8 @@ create view inventory_overview as
 grant select on inventory_overview to authenticated;
 
 -- Private bucket for downloadable files (served only through signed URLs from an Edge Function)
-insert into storage.buckets (id, name, public) values ('product-files', 'product-files', false) on conflict do nothing;
-insert into storage.buckets (id, name, public) values ('product-images', 'product-images', true) on conflict do nothing;
+insert into storage.buckets (id, name, public) values ('buydigital-product-files', 'buydigital-product-files', false) on conflict do nothing;
+insert into storage.buckets (id, name, public) values ('buydigital-product-images', 'buydigital-product-images', true) on conflict do nothing;
 
 insert into categories (slug, name, description, icon, sort_order) values
  ('streaming','Streaming','Video and music subscriptions','Tv',1),('education','Education','Learning apps and courses','GraduationCap',2),

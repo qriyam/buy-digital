@@ -34,5 +34,5 @@ export async function fulfilOrder(orderId: string) {
   await db.from("notifications").insert({ user_id: order.user_id, title: next === "delivered" ? "Order delivered" : "Payment received", body: `Order ${order.order_number}: ${message}` });
   await sendEmail(order.email, `BuyDigital order ${order.order_number}`,
     template(next === "delivered" ? "Your order is ready" : "Payment received", `Order ${order.order_number}: ${message}`,
-      `${Deno.env.get("SITE_URL")}/account/orders/${orderId}`));
+      `${Deno.env.get("BUYDIGITAL_SITE_URL")}/account/orders/${orderId}`));
 }

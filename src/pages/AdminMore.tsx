@@ -86,9 +86,9 @@ export function AdminOrderDetail() {
   const o: any = data.o;
   const act = async (action: "cancel" | "refund") => {
     if (!confirm(action === "refund" ? "Record a refund? Return the money in ToyyibPay / your bank too. The customer loses access to this order's goods." : "Cancel this unpaid order?")) return;
-    try { await callFn("admin-order-action", { order_id: id, action, reason }); setReason(""); setMsg("Done."); reload(); } catch (x) { setMsg(`Failed: ${(x as Error).message}`); }
+    try { await callFn("buydigital-admin-order-action", { order_id: id, action, reason }); setReason(""); setMsg("Done."); reload(); } catch (x) { setMsg(`Failed: ${(x as Error).message}`); }
   };
-  const fulfil = async (e: FormEvent<HTMLFormElement>, did: string) => { e.preventDefault(); try { await callFn("admin-fulfil", { delivery_id: did, note: String(new FormData(e.currentTarget).get("n")) }); setMsg("Delivered."); reload(); } catch (x) { setMsg(`Failed: ${(x as Error).message}`); } };
+  const fulfil = async (e: FormEvent<HTMLFormElement>, did: string) => { e.preventDefault(); try { await callFn("buydigital-admin-fulfil", { delivery_id: did, note: String(new FormData(e.currentTarget).get("n")) }); setMsg("Delivered."); reload(); } catch (x) { setMsg(`Failed: ${(x as Error).message}`); } };
   const canCancel = ["pending_payment", "payment_processing", "failed"].includes(o.status), canRefund = ["paid", "processing", "delivered", "completed"].includes(o.status);
   return (
     <div className="max-w-3xl"><Link to="/admin/orders" className="text-sm text-brand">← Orders</Link><H>Order {o.order_number}</H>
@@ -122,7 +122,7 @@ export function AdminUsers() {
   const [email, setEmail] = useState(""), [role, setRole] = useState("staff"), [msg, setMsg] = useState("");
   const run = async (action: string, em: string, rl: string) => {
     if (action === "revoke" && !confirm(`Remove ${rl} access for ${em}?`)) return;
-    try { await callFn("admin-users", { action, email: em, role: rl }); setMsg("Done."); setEmail(""); reload(); } catch (x) { const c = (x as Error).message; setMsg(c === "user_not_found" ? "That person must register first." : c === "last_admin" ? "You cannot remove the last admin." : c === "forbidden" ? "Only full admins can manage users." : "Failed."); }
+    try { await callFn("buydigital-admin-users", { action, email: em, role: rl }); setMsg("Done."); setEmail(""); reload(); } catch (x) { const c = (x as Error).message; setMsg(c === "user_not_found" ? "That person must register first." : c === "last_admin" ? "You cannot remove the last admin." : c === "forbidden" ? "Only full admins can manage users." : "Failed."); }
   };
   return (
     <div><H>Admin Users</H><Err e={error} /><p className="mt-1 text-sm text-mute">Admins manage users and everything else. Staff can work orders, products, support and inventory. Roles are stored in the database and checked on the server.</p>
@@ -156,7 +156,7 @@ export function AdminNotifications() {
   const [title, setTitle] = useState(""), [body, setBody] = useState(""), [email, setEmail] = useState(""), [msg, setMsg] = useState(""), [busy, setBusy] = useState(false);
   const send = async (e: FormEvent) => {
     e.preventDefault(); if (busy) return; if (!email.trim() && !confirm("Send this to ALL active customers?")) return; setBusy(true);
-    try { const r = await callFn<{ recipients: number }>("admin-notify", { title, body, email: email.trim() || undefined }); setMsg(`Sent to ${r.recipients} customer(s).`); setTitle(""); setBody(""); } catch (x) { setMsg((x as Error).message === "no_recipients" ? "No matching customer." : "Failed."); }
+    try { const r = await callFn<{ recipients: number }>("buydigital-admin-notify", { title, body, email: email.trim() || undefined }); setMsg(`Sent to ${r.recipients} customer(s).`); setTitle(""); setBody(""); } catch (x) { setMsg((x as Error).message === "no_recipients" ? "No matching customer." : "Failed."); }
     setBusy(false);
   };
   return (
