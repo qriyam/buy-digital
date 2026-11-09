@@ -7,7 +7,7 @@ import ProductCard from "../components/ProductCard";
 import Seo from "../lib/seo";
 
 export default function Home() {
-  const { categories, products, loading } = useCatalog();
+  const { categories, products, loading, error, reload } = useCatalog();
   const { t } = useT();
   const count = (slug: string) => products.filter((p) => p.category === slug).length;
   const popular = products.filter((p) => p.popular || p.featured).slice(0, 8);
@@ -49,7 +49,7 @@ export default function Home() {
 
       <section className="mx-auto max-w-6xl px-4 py-10">
         <div className="flex items-end justify-between"><h2 className="text-2xl font-bold tracking-tight">{t("popular")}</h2><Link to="/products" className="text-sm font-medium text-brand">{t("viewAll")}</Link></div>
-        {loading ? <p className="mt-6 text-mute">{t("loading")}</p> : popular.length === 0 ? <p className="mt-6 text-mute">{t("storeSetup")}</p> :
+        {loading ? <p className="mt-6 text-mute">{t("loading")}</p> : error ? <div className="card mt-6 flex flex-wrap items-center justify-between gap-3 p-4 text-sm" role="alert"><span>We couldn’t load the catalogue right now. Please try again.</span><button className="btn btn-ghost !py-2" onClick={reload}>Retry</button></div> : popular.length === 0 ? <p className="mt-6 text-mute">{t("storeSetup")}</p> :
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{popular.map((p) => <ProductCard key={p.slug} p={p} />)}</div>}
       </section>
 

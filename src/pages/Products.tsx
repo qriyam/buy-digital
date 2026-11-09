@@ -9,7 +9,7 @@ import Seo from "../lib/seo";
 const PAGE = 12;
 export default function Products() {
   const { slug } = useParams();
-  const { categories, products, getCategory, loading } = useCatalog();
+  const { categories, products, getCategory, loading, error, reload } = useCatalog();
   const { t } = useT();
   const [sp, setSp] = useSearchParams();
   const [shown, setShown] = useState(PAGE);
@@ -36,7 +36,7 @@ export default function Products() {
         <select value={sort} onChange={(e) => set("sort", e.target.value)} className={sel} aria-label="Sort"><option value="popular">{t("sortPopular")}</option><option value="low">{t("sortLow")}</option><option value="high">{t("sortHigh")}</option><option value="new">{t("sortNew")}</option></select>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={avail} onChange={(e) => set("available", e.target.checked ? "1" : "")} />{t("inStockOnly")}</label>
       </div>
-      {loading ? <p className="mt-16 text-center text-mute">{t("loading")}</p> : list.length === 0 ? <p className="mt-16 text-center text-mute">{products.length ? t("noMatch") : t("storeSetup")}</p> : (<>
+      {loading ? <p className="mt-16 text-center text-mute">{t("loading")}</p> : error ? <div className="card mt-16 flex flex-wrap items-center justify-center gap-3 p-6 text-sm" role="alert"><span>We couldn’t load the catalogue right now.</span><button className="btn btn-ghost !py-2" onClick={reload}>Retry</button></div> : list.length === 0 ? <p className="mt-16 text-center text-mute">{products.length ? t("noMatch") : t("storeSetup")}</p> : (<>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{list.slice(0, shown).map((p) => <ProductCard key={p.slug} p={p} />)}</div>
         {shown < list.length && <div className="mt-8 text-center"><button className="btn btn-ghost" onClick={() => setShown(shown + PAGE)}>{t("loadMore")}</button></div>}</>)}
     </div>

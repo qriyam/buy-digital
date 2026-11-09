@@ -17,8 +17,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setAdmin] = useState(false);
   useEffect(() => {
     if (!supabase) return;
-    const ready = async (u: User | null) => { if (u) await supabase!.rpc("ensure_profile"); setUser(u); };   // creates this site's profile on first sign-in
-    supabase.auth.getSession().then(async ({ data }) => { await ready(data.session?.user ?? null); setLoading(false); });
+    const ready = async (u: User | null) => {
+      // Profile creation is best-effort: a temporary RPC/schema issue must not
+      // leave the entire storefront stuck on its loading state.
+      if (u) await Promise.resolve(supabase!.rpc("ensure_profile")).catch(() => undefined);
+      setUser(u);
+    };   // creates this site's profile on first sign-in
+    supabase.auth.getSession().then(async ({ data }) => {
+      try { await ready(data.session?.user ?? null); }
+      finally { setLoading(false); }
+    }).catch(() => setLoading(false));
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => { const u = s?.user ?? null; setTimeout(() => { void ready(u); }, 0); });
     return () => sub.subscription.unsubscribe();
   }, []);
