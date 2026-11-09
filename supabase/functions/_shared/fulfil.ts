@@ -6,6 +6,8 @@ import { sendEmail, template } from "./email.ts";
 export async function fulfilOrder(orderId: string) {
   const { error } = await db.rpc("fulfil_license_items", { p_order: orderId });
   if (error) throw error;
+  const f = await db.rpc("fulfil_file_items", { p_order: orderId });
+  if (f.error) throw f.error;
 
   const { data: order } = await db.from("orders").select("id,order_number,user_id,email,status").eq("id", orderId).single();
   if (!order) return;
@@ -13,7 +15,7 @@ export async function fulfilOrder(orderId: string) {
   const { data: dels } = await db.from("deliveries").select("order_item_id,status").eq("order_id", orderId);
 
   // Items needing a person (manual / subscription / file) get one pending delivery row for the admin queue.
-  const manual = (items ?? []).filter((i: any) => i.products.delivery_method !== "license_key");
+  const manual = (items ?? []).filter((i: any) => !["license_key", "file"].includes(i.products.delivery_method));
   for (const i of manual) {
     if (!dels?.some((d) => d.order_item_id === i.id)) {
       await db.from("deliveries").insert({ order_id: orderId, order_item_id: i.id, user_id: order.user_id, kind: (i as any).products.delivery_method, status: "pending" });

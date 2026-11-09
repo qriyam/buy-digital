@@ -1,16 +1,16 @@
 import { useState, type FormEvent, type ReactNode } from "react";
-import { NavLink, Navigate, Outlet } from "react-router-dom";
+import { Link, NavLink, Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { callFn, live, supabase } from "../lib/supabase";
 import { useFetch } from "../lib/useFetch";
 import { rm } from "../lib/format";
 
-const db = () => supabase!;
-const when = (s: string) => new Date(s).toLocaleString("en-MY", { dateStyle: "medium", timeStyle: "short" });
-const inp = "rounded-xl border border-line px-3 py-2 text-sm";
-const Err = ({ e }: { e: string | null }) => e ? <p role="alert" className="text-sm text-brand">{e}</p> : null;
-const H = ({ children }: { children: ReactNode }) => <h1 className="text-2xl font-bold tracking-tight">{children}</h1>;
-const Table = ({ head, rows }: { head: string[]; rows: ReactNode[][] }) => (
+export const db = () => supabase!;
+export const when = (s: string) => new Date(s).toLocaleString("en-MY", { dateStyle: "medium", timeStyle: "short" });
+export const inp = "rounded-xl border border-line px-3 py-2 text-sm";
+export const Err = ({ e }: { e: string | null }) => e ? <p role="alert" className="text-sm text-brand">{e}</p> : null;
+export const H = ({ children }: { children: ReactNode }) => <h1 className="text-2xl font-bold tracking-tight">{children}</h1>;
+export const Table = ({ head, rows }: { head: string[]; rows: ReactNode[][] }) => (
   <div className="mt-5 overflow-x-auto"><table className="w-full min-w-[640px] text-left text-sm"><thead className="text-mute"><tr>{head.map((h) => <th key={h} className="py-2 pr-3">{h}</th>)}</tr></thead>
     <tbody className="divide-y divide-line">{rows.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j} className="py-2.5 pr-3 align-top">{c}</td>)}</tr>)}</tbody></table></div>);
 
@@ -21,7 +21,7 @@ export function AdminLayout() {
   if (!user) return <Navigate to="/login" replace />;
   if (!isAdmin) return <div className="py-24 text-center"><h1 className="text-2xl font-bold">Not authorised</h1><p className="mt-2 text-mute">This area is for store administrators.</p></div>;
   const l = ({ isActive }: { isActive: boolean }) => `block rounded-lg px-3 py-2 text-sm ${isActive ? "bg-brand/10 font-semibold text-brand" : "hover:bg-soft"}`;
-  const nav = [["", "Dashboard"], ["products", "Products"], ["orders", "Orders"], ["customers", "Customers"], ["inventory", "Digital Inventory"], ["payments", "Payments"], ["coupons", "Coupons"], ["support", "Support Tickets"], ["audit-logs", "Audit Logs"]];
+  const nav = [["", "Dashboard"], ["products", "Products"], ["categories", "Categories"], ["orders", "Orders"], ["customers", "Customers"], ["inventory", "Digital Inventory"], ["payments", "Payments"], ["coupons", "Coupons"], ["support", "Support Tickets"], ["reviews", "Reviews"], ["notifications", "Notifications"], ["settings", "Website Settings"], ["users", "Admin Users"], ["audit-logs", "Audit Logs"]];
   return (
     <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:grid-cols-[210px_1fr]">
       <nav aria-label="Admin" className="flex gap-1 overflow-x-auto md:flex-col">
@@ -29,48 +29,6 @@ export function AdminLayout() {
         <button onClick={signOut} className="rounded-lg px-3 py-2 text-left text-sm hover:bg-soft">Logout</button></nav>
       <section className="min-w-0"><Outlet /></section>
     </div>
-  );
-}
-
-export function Dashboard() {
-  const { data, error } = useFetch(async () => {
-    const [o, c, p, inv, pay] = await Promise.all([
-      db().from("orders").select("status,total"), db().from("profiles").select("id", { count: "exact", head: true }),
-      db().from("products").select("id", { count: "exact", head: true }).eq("is_active", true).is("archived_at", null),
-      db().from("inventory_overview").select("variant_id,status"), db().from("payments").select("amount,status,order_id")]);
-    return { orders: o.data ?? [], customers: c.count ?? 0, products: p.count ?? 0, inv: inv.data ?? [], pay: pay.data ?? [] };
-  }, []);
-  const d = data; if (!d) return <div><H>Dashboard</H><Err e={error} /></div>;
-  const revenue = d.pay.filter((p: any) => p.status === "succeeded").reduce((a: number, p: any) => a + Number(p.amount), 0);
-  const avail: Record<string, number> = {}; d.inv.forEach((i: any) => { if (i.status === "available") avail[i.variant_id] = (avail[i.variant_id] ?? 0) + 1; });
-  const stat = (t: string, v: string | number) => <div className="card p-4"><p className="text-sm text-mute">{t}</p><p className="mt-1 text-2xl font-bold">{v}</p></div>;
-  return (
-    <div><H>Dashboard</H><Err e={error} />
-      <p className="mt-1 text-sm text-mute">Revenue counts verified, non-refunded payments only. Charts are not built yet.</p>
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {stat("Revenue", rm(revenue))}{stat("Total orders", d.orders.length)}
-        {stat("Awaiting fulfilment", d.orders.filter((o: any) => ["paid", "processing"].includes(o.status)).length)}
-        {stat("Completed", d.orders.filter((o: any) => ["delivered", "completed"].includes(o.status)).length)}
-        {stat("Customers", d.customers)}{stat("Active products", d.products)}
-        {stat("Codes available", Object.values(avail).reduce((a, b) => a + b, 0))}</div></div>
-  );
-}
-
-export function AdminProducts() {
-  const { data, reload, error } = useFetch(async () => (await db().from("products").select("id,name,delivery_method,is_active,product_variants(id,label,price,is_available,is_active)").order("name")).data ?? [], []);
-  const [msg, setMsg] = useState("");
-  const setVar = async (id: string, patch: object) => { const { error } = await db().from("product_variants").update(patch).eq("id", id); setMsg(error ? "Update failed." : "Saved."); reload(); };
-  const setProd = async (id: string, patch: object) => { const { error } = await db().from("products").update(patch).eq("id", id); setMsg(error ? "Update failed." : "Saved."); reload(); };
-  return (
-    <div><H>Products</H><Err e={error} /><p className="mt-1 text-sm text-mute" role="status">{msg || "Prices and availability are edited here and enforced on the server at checkout."}</p>
-      <div className="mt-5 space-y-4">{(data ?? []).map((p: any) => (
-        <div key={p.id} className="card p-4"><div className="flex items-center justify-between"><p className="font-semibold">{p.name} <span className="text-xs font-normal text-mute">{p.delivery_method}</span></p>
-          <label className="text-sm"><input type="checkbox" checked={p.is_active} onChange={(e) => setProd(p.id, { is_active: e.target.checked })} /> Active</label></div>
-          {p.product_variants.map((v: any) => (
-            <div key={v.id} className="mt-2 flex flex-wrap items-center gap-3 text-sm"><span className="w-28">{v.label}</span>
-              <label>RM <input type="number" step="0.01" min="0" defaultValue={v.price} className={`${inp} w-24`} onBlur={(e) => Number(e.target.value) !== Number(v.price) && setVar(v.id, { price: e.target.value })} /></label>
-              <label><input type="checkbox" checked={v.is_available} onChange={(e) => setVar(v.id, { is_available: e.target.checked })} /> In stock</label></div>))}</div>))}
-        {!data?.length && <p className="text-sm text-mute">No products yet. Add rows to <code>products</code> and <code>product_variants</code> (a product form is not built yet).</p>}</div></div>
   );
 }
 
@@ -92,7 +50,7 @@ export function AdminOrders() {
         <select className={inp} value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status"><option value="">All statuses</option>{["pending_payment", "payment_processing", "paid", "processing", "delivered", "completed", "cancelled", "refunded", "failed"].map((s) => <option key={s} value={s}>{s.replace(/_/g, " ")}</option>)}</select></div>
       <p className="mt-2 text-sm text-mute" role="status">{msg}</p>
       <Table head={["Order", "Customer", "Items", "Total", "Status", "Fulfil"]} rows={(data ?? []).map((o: any) => [
-        <span key="a"><b>{o.order_number}</b><br /><span className="text-xs text-mute">{when(o.created_at)}</span></span>, o.email,
+        <span key="a"><Link className="font-semibold text-brand" to={`/admin/orders/${o.id}`}>{o.order_number}</Link><br /><span className="text-xs text-mute">{when(o.created_at)}</span></span>, o.email,
         o.order_items.map((i: any) => `${i.product_name} (${i.variant_label})`).join(", "), rm(Number(o.total)), o.status.replace(/_/g, " "),
         <div key="f">{o.deliveries.filter((d: any) => d.status === "pending").map((d: any) => (
           <form key={d.id} onSubmit={(e) => fulfil(e, d.id)} className="flex gap-1"><input name="n" required placeholder="Delivery details" className={`${inp} w-44`} aria-label="Delivery details" /><button className="btn btn-primary !px-3 !py-2">Deliver</button></form>))}</div>])} /></div>
@@ -159,6 +117,5 @@ function Simple({ title, table, cols, order }: { title: string; table: string; c
   const { data, error } = useFetch(async () => (await db().from(table).select(cols.join(",")).order(order, { ascending: false }).limit(200)).data ?? [], [table]);
   return <div><H>{title}</H><Err e={error} /><Table head={cols} rows={(data ?? []).map((r: any) => cols.map((c) => { const v = r[c]; return v && typeof v === "object" ? JSON.stringify(v) : c.endsWith("_at") && v ? when(v) : String(v ?? ""); }))} /></div>;
 }
-export const AdminCustomers = () => <Simple title="Customers" table="profiles" cols={["email", "full_name", "status", "created_at"]} order="created_at" />;
 export const AdminPayments = () => <Simple title="Payments" table="payments" cols={["provider", "provider_ref", "amount", "status", "verified_at", "created_at"]} order="created_at" />;
 export const AdminAudit = () => <Simple title="Audit Logs" table="admin_audit_logs" cols={["action", "entity", "entity_id", "details", "created_at"]} order="created_at" />;

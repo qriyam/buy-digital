@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://buydigital.my/</loc></url><url><loc>https://buydigital.my/products</loc></url><url><loc>https://buydigital.my/categories</loc></url>
-  <url><loc>https://buydigital.my/about</loc></url><url><loc>https://buydigital.my/contact</loc></url><url><loc>https://buydigital.my/faq</loc></url>
+  <url><loc>https://buydigital.my/</loc></url>
+  <url><loc>https://buydigital.my/products</loc></url>
+  <url><loc>https://buydigital.my/categories</loc></url>
+  <url><loc>https://buydigital.my/about</loc></url>
+  <url><loc>https://buydigital.my/contact</loc></url>
+  <url><loc>https://buydigital.my/faq</loc></url>
+  <url><loc>https://buydigital.my/shipping-and-delivery</loc></url>
+  <url><loc>https://buydigital.my/privacy-policy</loc></url>
+  <url><loc>https://buydigital.my/terms-and-conditions</loc></url>
+  <url><loc>https://buydigital.my/refund-policy</loc></url>
 </urlset>

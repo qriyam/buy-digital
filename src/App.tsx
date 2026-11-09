@@ -11,7 +11,9 @@ import Info from "./pages/Info";
 import NotFound from "./pages/NotFound";
 import { Login, Register, Forgot, ResetPassword } from "./pages/AuthPages";
 import { AccountLayout, Overview, Orders, OrderDetail, Profile, Notifications, Support } from "./pages/Account";
-import { AdminLayout, Dashboard, AdminProducts, AdminOrders, AdminInventory, AdminCoupons, AdminSupport, AdminCustomers, AdminPayments, AdminAudit } from "./pages/Admin";
+import { AdminLayout, AdminOrders, AdminInventory, AdminCoupons, AdminSupport, AdminPayments, AdminAudit } from "./pages/Admin";
+import { AdminProducts, AdminProductForm, AdminCategories } from "./pages/AdminCatalog";
+import { Dashboard, AdminCustomers, AdminOrderDetail, AdminReviews, AdminUsers, AdminSettings, AdminNotifications } from "./pages/AdminMore";
 
 export default function App() {
   return (
@@ -26,7 +28,7 @@ export default function App() {
           <Route path="/categories/:slug" element={<Products />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
-          {["/about", "/contact", "/faq", "/privacy-policy", "/terms-and-conditions", "/refund-policy"].map((p) => <Route key={p} path={p} element={<Info />} />)}
+          {["/about", "/contact", "/faq", "/privacy-policy", "/terms-and-conditions", "/refund-policy", "/shipping-and-delivery"].map((p) => <Route key={p} path={p} element={<Info />} />)}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<Forgot />} />
@@ -37,9 +39,9 @@ export default function App() {
             <Route path="password" element={<ResetPassword />} />
           </Route>
           <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Dashboard />} /><Route path="products" element={<AdminProducts />} /><Route path="orders" element={<AdminOrders />} />
+            <Route index element={<Dashboard />} /><Route path="products" element={<AdminProducts />} /><Route path="products/:id" element={<AdminProductForm />} /><Route path="categories" element={<AdminCategories />} /><Route path="orders" element={<AdminOrders />} /><Route path="orders/:id" element={<AdminOrderDetail />} />
             <Route path="customers" element={<AdminCustomers />} /><Route path="inventory" element={<AdminInventory />} /><Route path="payments" element={<AdminPayments />} />
-            <Route path="coupons" element={<AdminCoupons />} /><Route path="support" element={<AdminSupport />} /><Route path="audit-logs" element={<AdminAudit />} />
+            <Route path="coupons" element={<AdminCoupons />} /><Route path="support" element={<AdminSupport />} /><Route path="reviews" element={<AdminReviews />} /><Route path="notifications" element={<AdminNotifications />} /><Route path="settings" element={<AdminSettings />} /><Route path="users" element={<AdminUsers />} /><Route path="audit-logs" element={<AdminAudit />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

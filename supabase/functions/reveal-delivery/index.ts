@@ -12,6 +12,10 @@ serve(async (req) => {
   const { delivery_id } = await readJson<{ delivery_id?: string }>(req, 2000);
   if (!UUID.test(String(delivery_id))) throw new HttpError(400, "invalid_delivery");
 
+  const since = new Date(Date.now() - 60_000).toISOString();   // rate limit: 20 reveals / minute / user
+  const { count: recent } = await db.from("admin_audit_logs").select("id", { count: "exact", head: true }).eq("actor_id", profile.id).eq("action", "reveal_delivery").gte("created_at", since);
+  if ((recent ?? 0) >= 20) throw new HttpError(429, "slow_down");
+
   const { data: d } = await db.from("deliveries")
     .select("id,kind,status,inventory_item_id,order_id,orders!inner(status)")
     .eq("id", delivery_id).eq("user_id", profile.id).maybeSingle();   // ownership enforced here

@@ -10,3 +10,13 @@ verify_jwt = false
 verify_jwt = false
 [functions.toyyibpay-webhook]
 verify_jwt = false
+[functions.quote-cart]
+verify_jwt = false
+[functions.get-download]
+verify_jwt = false
+[functions.admin-order-action]
+verify_jwt = false
+[functions.admin-users]
+verify_jwt = false
+[functions.admin-notify]
+verify_jwt = false

@@ -58,6 +58,13 @@ function Reveal({ id }: { id: string }) {
   return code ? <code className="select-all rounded-lg bg-soft px-3 py-2 text-sm">{code}</code> : <><button className="btn btn-primary !py-2" onClick={show} disabled={busy}>Show code</button>{err && <span role="alert" className="ml-2 text-sm text-brand">{err}</span>}</>;
 }
 
+function Download({ id }: { id: string }) {
+  const [err, setErr] = useState<string | null>(null), [busy, setBusy] = useState(false);
+  const msgs: Record<string, string> = { download_limit_reached: "Download limit reached. Contact support.", download_expired: "This download has expired. Contact support.", order_not_active: "This order is no longer active." };
+  const go = async () => { if (busy) return; setBusy(true); setErr(null); try { window.location.assign((await callFn<{ url: string }>("get-download", { delivery_id: id })).url); } catch (e) { setErr(msgs[(e as Error).message] ?? "Could not start the download."); } setBusy(false); };
+  return <><button className="btn btn-primary !py-2" onClick={go} disabled={busy}>Download file</button>{err && <span role="alert" className="ml-2 text-sm text-brand">{err}</span>}</>;
+}
+
 export function OrderDetail() {
   const { id = "" } = useParams();
   const { data, error, loading } = useFetch(async () => {
@@ -78,7 +85,7 @@ export function OrderDetail() {
         <li className="flex justify-between p-4 text-sm font-semibold"><span>Total</span><span>{rm(Number(o.total))}</span></li></ul>
       <h2 className="mt-6 font-semibold">Delivery</h2>
       <ul className="card mt-2 divide-y divide-line">{del.length === 0 ? <li className="p-4 text-sm text-mute">Delivery starts after your payment is verified.</li> : del.map((d: any) =>
-        <li key={d.id} className="p-4 text-sm">{d.status === "delivered" ? (d.kind === "license_key" ? <Reveal id={d.id} /> : <p>{d.note}</p>) : <p className="text-mute">We are preparing this item.</p>}</li>)}</ul>
+        <li key={d.id} className="p-4 text-sm">{d.status === "delivered" ? (d.kind === "license_key" ? <Reveal id={d.id} /> : d.kind === "file" ? <Download id={d.id} /> : <p>{d.note}</p>) : <p className="text-mute">We are preparing this item.</p>}</li>)}</ul>
       <h2 className="mt-6 font-semibold">Timeline</h2>
       <ol className="mt-2 space-y-2 border-l border-line pl-4 text-sm">{ev.map((e: any) => <li key={e.id}><span className="font-medium capitalize">{e.status.replace(/_/g, " ")}</span> <span className="text-mute">{when(e.created_at)}</span>{e.message && <p className="text-mute">{e.message}</p>}</li>)}</ol>
       <Link to="/account/support" className="btn btn-ghost mt-8">Need help with this order?</Link>
