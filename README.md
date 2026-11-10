@@ -26,8 +26,8 @@ Everything BuyDigital creates is namespaced so several sites can live in one pro
 Auth users are shared across the project (that is how Supabase Auth works). Email templates and the Site URL / redirect URLs in Auth settings are also shared, so list every site's URL there.
 
 ## First-time setup
-1. Create (or open) your Supabase project. Run both files in `supabase/migrations/` in order (SQL editor).
-2. **Settings > API > Exposed schemas:** add `buydigital` (keep the existing ones). Without this the site cannot read its tables.
+1. Create (or open) your Supabase project. Run all four files in `supabase/migrations/` in order (SQL editor).
+2. Add `buydigital` to the **Exposed schemas** list (keep the existing ones). Without this the site cannot read its tables. Where it lives depends on your dashboard version: Project Settings > Data API, or Integrations > Data API > Settings, or (older) Settings > API. The schema only appears in the list after the migrations have run.
 3. `cp .env.example .env`; set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 4. Copy `supabase/secrets.example` to `supabase/secrets.env`, fill it in (never commit it), then:
    `supabase secrets set --env-file supabase/secrets.env`

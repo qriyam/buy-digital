@@ -26,8 +26,8 @@ BuyDigital-এর সবকিছু আলাদা নামে রাখা �
 মনে রাখবি, Supabase Auth-এর ইউজার, ইমেইল টেমপ্লেট আর Site URL পুরো প্রজেক্টে শেয়ার্ড। তাই Auth সেটিংসে প্রতিটা সাইটের URL আলাদা করে যোগ করতে হবে।
 
 ## প্রথমবার সেটআপ
-1. Supabase প্রজেক্ট খোল (বা আগেরটা ব্যবহার কর)। `supabase/migrations/`-এর দুটো ফাইল পরপর SQL এডিটরে চালা।
-2. **Settings > API > Exposed schemas**-এ `buydigital` যোগ কর। আগের স্কিমাগুলো রেখে দিবি। এটা না করলে সাইট টেবিল পড়তে পারবে না।
+1. Supabase প্রজেক্ট খোল (বা আগেরটা ব্যবহার কর)। `supabase/migrations/`-এর চারটা ফাইল পরপর SQL এডিটরে চালা।
+2. **Exposed schemas** লিস্টে `buydigital` যোগ কর। আগের স্কিমাগুলো রেখে দিবি। এটা না করলে সাইট টেবিল পড়তে পারবে না। ড্যাশবোর্ডের ভার্সন অনুযায়ী জায়গাটা হলো Project Settings > Data API, অথবা Integrations > Data API > Settings, অথবা (পুরোনো) Settings > API। মাইগ্রেশন চালানোর পরেই লিস্টে স্কিমাটা দেখা যাবে।
 3. `cp .env.example .env` করে `VITE_SUPABASE_URL` আর `VITE_SUPABASE_ANON_KEY` বসা।
 4. `supabase/secrets.example` কপি করে `supabase/secrets.env` নাম দে এবং সব মান ভর। এই ফাইল কখনো গিটে তুলবি না। তারপর চালা:
    `supabase secrets set --env-file supabase/secrets.env`
