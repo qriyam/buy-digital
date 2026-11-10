@@ -4,6 +4,8 @@ import { useCatalog } from "../lib/catalog";
 import { useT } from "../lib/i18n";
 import { Icon } from "../lib/icons";
 import ProductCard from "../components/ProductCard";
+import ProductSkeleton from "../components/ProductSkeleton";
+import Reveal from "../components/Reveal";
 import Seo from "../lib/seo";
 
 export default function Home() {
@@ -17,50 +19,61 @@ export default function Home() {
     <>
       <Seo title="BuyDigital — Your Digital World, Simplified" path="/" description="Subscriptions, software, AI tools, gift cards and gaming top-ups for Malaysia, priced in RM. Pay securely and get your digital products delivered."
         jsonLd={{ "@context": "https://schema.org", "@type": "Organization", name: "BuyDigital", url: "https://buydigital.my" }} />
-      <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 md:grid-cols-2 md:py-24">
-        <div>
-          <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-5xl">{t("heroTitle")}</h1>
-          <p className="mt-5 max-w-md text-lg text-mute">{t("heroSub")}</p>
-          <div className="mt-8 flex flex-wrap gap-3"><Link to="/products" className="btn btn-primary">{t("explore")}</Link><Link to="/faq" className="btn btn-ghost">{t("how")}</Link></div>
-          <ul className="mt-10 grid gap-3 text-sm sm:grid-cols-3">{trust.map(([I, x]) => <li key={x} className="flex items-center gap-2"><I className="h-4 w-4 shrink-0 text-brand" aria-hidden />{x}</li>)}</ul>
-        </div>
-        <div className="relative mx-auto grid h-[360px] w-full max-w-sm place-items-center" aria-hidden>
-          <div className="absolute inset-6 rounded-[40px] bg-soft" />
-          <div className="relative h-[320px] w-[170px] rounded-[28px] border-[6px] border-ink bg-white p-3 shadow-lg">
-            <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-line" />
-            {categories.slice(0, 3).map((c, i) => <div key={c.slug} className={`mb-2 flex items-center gap-2 rounded-xl p-2.5 text-xs font-medium ${i === 0 ? "bg-brand text-white" : "bg-soft"}`}>{c.name}</div>)}
+      <section className="relative overflow-hidden">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand/10 blur-3xl" aria-hidden />
+        <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-brand/5 blur-3xl" aria-hidden />
+        <div className="relative mx-auto grid max-w-6xl items-center gap-8 px-4 py-10 md:grid-cols-2 md:gap-10 md:py-24">
+          <div>
+            <span className="animate-fade-up inline-block rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">buydigital.my</span>
+            <h1 className="animate-fade-up mt-4 text-[2rem] font-bold leading-[1.15] tracking-tight [animation-delay:80ms] sm:text-4xl md:text-5xl">{t("heroTitle")}</h1>
+            <p className="animate-fade-up mt-4 max-w-md text-base text-mute [animation-delay:160ms] md:text-lg">{t("heroSub")}</p>
+            <div className="animate-fade-up mt-7 flex flex-wrap gap-3 [animation-delay:240ms]"><Link to="/products" className="btn btn-primary animate-ring">{t("explore")}</Link><Link to="/faq" className="btn btn-ghost">{t("how")}</Link></div>
+            <ul className="mt-8 grid gap-3 text-sm sm:grid-cols-3">{trust.map(([I, x], i) => <li key={x} className="animate-fade-up flex items-center gap-2" style={{ animationDelay: `${320 + i * 90}ms` }}><span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand/10"><I className="h-4 w-4 text-brand" aria-hidden /></span>{x}</li>)}</ul>
           </div>
-          {(["Tv", "Sparkles", "Gift", "Gamepad2"] as const).map((n, i) => <div key={n} className="absolute grid h-12 w-12 place-items-center rounded-2xl border border-line bg-white text-brand shadow-sm" style={{ top: ["6%", "18%", "62%", "76%"][i], left: ["4%", "78%", "0%", "80%"][i] }}><Icon name={n} className="h-5 w-5" /></div>)}
+          <div className="relative mx-auto grid h-[340px] w-full max-w-sm place-items-center md:h-[380px]" aria-hidden>
+            <div className="absolute inset-4 rounded-[40px] bg-gradient-to-br from-soft to-white" />
+            <div className="animate-float relative h-[300px] w-[160px] rounded-[28px] border-[6px] border-ink bg-white p-3 shadow-xl md:h-[330px] md:w-[176px]">
+              <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-line" />
+              <div className="mb-3 h-7 rounded-lg bg-soft" />
+              {(categories.length ? categories.slice(0, 3).map((c) => c.name) : ["Streaming", "AI Tools", "Gift Cards"]).map((name, i) => (
+                <div key={name} className={`animate-slide-in mb-2 flex items-center gap-2 rounded-xl p-2.5 text-xs font-medium ${i === 0 ? "bg-brand text-white" : "bg-soft"}`} style={{ animationDelay: `${500 + i * 150}ms` }}>
+                  <span className={`h-5 w-5 shrink-0 rounded-md ${i === 0 ? "bg-white/30" : "bg-brand/15"}`} /><span className="truncate">{name}</span></div>))}
+              <div className="animate-ring absolute inset-x-3 bottom-3 grid h-9 place-items-center rounded-xl bg-brand text-xs font-semibold text-white">{t("buyNow")}</div>
+            </div>
+            {(["Tv", "Sparkles", "Gift", "Gamepad2"] as const).map((n, i) => (
+              <div key={n} className="animate-float absolute grid h-11 w-11 place-items-center rounded-2xl border border-line bg-white text-brand shadow-md md:h-12 md:w-12"
+                style={{ top: ["4%", "16%", "64%", "78%"][i], left: ["2%", "76%", "0%", "78%"][i], animationDelay: `${i * 600}ms`, animationDuration: `${3.6 + i * 0.5}s` }}><Icon name={n} className="h-5 w-5" /></div>))}
+          </div>
         </div>
       </section>
 
       {categories.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 py-10">
+        <Reveal><section className="mx-auto max-w-6xl px-4 py-10">
           <h2 className="text-2xl font-bold tracking-tight">{t("shopByCategory")}</h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {categories.map((c) => (
-              <Link key={c.slug} to={`/categories/${c.slug}`} className="card p-5 transition hover:border-brand/40">
+              <Link key={c.slug} to={`/categories/${c.slug}`} className="card lift p-5 hover:border-brand/40">
                 <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand/10 text-brand"><Icon name={c.icon} className="h-5 w-5" /></span>
                 <p className="mt-3 font-semibold">{c.name}</p><p className="mt-1 text-sm text-mute">{c.blurb}</p>
                 <p className="mt-3 text-xs text-mute">{count(c.slug)} {count(c.slug) === 1 ? t("productWord") : t("productsWord")}</p>
               </Link>))}
           </div>
-        </section>)}
+        </section></Reveal>)}
 
-      <section className="mx-auto max-w-6xl px-4 py-10">
+      <Reveal><section className="mx-auto max-w-6xl px-4 py-10">
         <div className="flex items-end justify-between"><h2 className="text-2xl font-bold tracking-tight">{t("popular")}</h2><Link to="/products" className="text-sm font-medium text-brand">{t("viewAll")}</Link></div>
-        {loading ? <p className="mt-6 text-mute">{t("loading")}</p> : error ? <div className="card mt-6 flex flex-wrap items-center justify-between gap-3 p-4 text-sm" role="alert"><span>We couldn’t load the catalogue right now. Please try again.</span><button className="btn btn-ghost !py-2" onClick={reload}>Retry</button></div> : popular.length === 0 ? <p className="mt-6 text-mute">{t("storeSetup")}</p> :
+        {loading ? <ProductSkeleton /> : error ? <div className="card mt-6 flex flex-wrap items-center justify-between gap-3 p-4 text-sm" role="alert"><span>We couldn’t load the catalogue right now. Please try again.</span><button className="btn btn-ghost !py-2" onClick={reload}>Retry</button></div> : popular.length === 0 ? <p className="mt-6 text-mute">{t("storeSetup")}</p> :
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{popular.map((p) => <ProductCard key={p.slug} p={p} />)}</div>}
-      </section>
+      </section></Reveal>
 
-      <section className="mx-auto max-w-6xl px-4 py-10">
+      <Reveal><section className="mx-auto max-w-6xl px-4 py-10">
         <h2 className="text-2xl font-bold tracking-tight">{t("why")}</h2>
         <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">{why.map(([I, a, d]) => <div key={a}><I className="h-6 w-6 text-brand" aria-hidden /><p className="mt-3 font-semibold">{a}</p><p className="mt-1 text-sm text-mute">{d}</p></div>)}</div>
-      </section>
+      </section></Reveal>
 
-      <section className="mx-auto mt-10 max-w-6xl px-4"><div className="rounded-3xl bg-brand px-6 py-14 text-center text-white">
+      <Reveal><section className="mx-auto mt-10 max-w-6xl px-4"><div className="rounded-3xl bg-brand px-6 py-14 text-center text-white">
         <h2 className="text-3xl font-bold tracking-tight">{t("ctaTitle")}</h2><p className="mx-auto mt-3 max-w-md text-white/90">{t("ctaDesc")}</p>
-        <Link to="/products" className="btn mt-7 bg-white text-brand hover:bg-soft">{t("ctaBtn")}</Link></div></section>
+        <Link to="/products" className="btn mt-7 bg-white text-brand hover:bg-soft">{t("ctaBtn")}</Link></div></section></Reveal>
     </>
   );
 }

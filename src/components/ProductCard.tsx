@@ -9,7 +9,7 @@ export default function ProductCard({ p }: { p: Product }) {
   const { getCategory } = useCatalog();
   const { t } = useT();
   return (
-    <Link to={`/products/${p.slug}`} className="card group flex flex-col p-4 transition hover:border-brand/40 hover:shadow-sm">
+    <Link to={`/products/${p.slug}`} className="card lift group flex flex-col p-4 hover:border-brand/40">
       {p.images[0] ? <img src={p.images[0]} alt={p.name} loading="lazy" decoding="async" className="mb-4 h-28 w-full rounded-xl bg-soft object-contain" />
         : <div className="mb-4 grid h-28 place-items-center rounded-xl bg-soft text-3xl font-bold text-brand" aria-hidden>{p.name[0]}</div>}
       <p className="text-xs text-mute">{getCategory(p.category)?.name}</p>

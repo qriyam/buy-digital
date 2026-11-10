@@ -6,6 +6,7 @@ import { useCart } from "../lib/cart";
 import { useAuth } from "../lib/auth";
 import { useT } from "../lib/i18n";
 import { useSettings } from "../lib/settings";
+import { live } from "../lib/supabase";
 
 export default function Header() {
   const { count } = useCart();
@@ -22,6 +23,7 @@ export default function Header() {
   const toggle = <button onClick={() => setLang(lang === "en" ? "ms" : "en")} className="flex items-center gap-1 rounded-xl p-2 text-xs font-semibold hover:bg-soft" aria-label={t("language")}><Languages className="h-4 w-4" aria-hidden />{lang === "en" ? "BM" : "EN"}</button>;
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur">
+      {!live && <p className="bg-ink px-4 py-1.5 text-center text-xs font-medium text-white" role="alert">Setup needed: this build has no Supabase keys (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY). Add them in your hosting settings and redeploy.</p>}
       {announcement && <p className="bg-brand px-4 py-1.5 text-center text-xs font-medium text-white">{announcement}</p>}
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
         <Logo />

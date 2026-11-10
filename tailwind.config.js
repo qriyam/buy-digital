@@ -4,6 +4,17 @@ export default {
     colors: { brand: { DEFAULT: "#E62117", dark: "#C81710" }, ink: "#171717", mute: "#6B7280", soft: "#F8F8F8", line: "#EEEEEE", ok: "#079669" },
     fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"] },
     borderRadius: { card: "14px" },
+    keyframes: {
+      float: { "0%,100%": { transform: "translateY(0)" }, "50%": { transform: "translateY(-10px)" } },
+      fadeUp: { from: { opacity: "0", transform: "translateY(16px)" }, to: { opacity: "1", transform: "none" } },
+      slideIn: { from: { opacity: "0", transform: "translateX(-14px)" }, to: { opacity: "1", transform: "none" } },
+      ring: { "0%": { boxShadow: "0 0 0 0 rgba(230,33,23,.45)" }, "70%,100%": { boxShadow: "0 0 0 12px rgba(230,33,23,0)" } },
+      shimmer: { "0%": { backgroundPosition: "-200% 0" }, "100%": { backgroundPosition: "200% 0" } },
+    },
+    animation: {
+      float: "float 4s ease-in-out infinite", "fade-up": "fadeUp .7s ease both", "slide-in": "slideIn .6s ease both",
+      ring: "ring 2s ease-out infinite", shimmer: "shimmer 2.4s linear infinite",
+    },
   } },
   plugins: [],
 };
