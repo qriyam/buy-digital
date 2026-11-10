@@ -6,6 +6,7 @@ import { Icon } from "../lib/icons";
 import ProductCard from "../components/ProductCard";
 import ProductSkeleton from "../components/ProductSkeleton";
 import Reveal from "../components/Reveal";
+import PhoneDemo from "../components/PhoneDemo";
 import Seo from "../lib/seo";
 
 export default function Home() {
@@ -30,19 +31,12 @@ export default function Home() {
             <div className="animate-fade-up mt-7 flex flex-wrap gap-3 [animation-delay:240ms]"><Link to="/products" className="btn btn-primary animate-ring">{t("explore")}</Link><Link to="/faq" className="btn btn-ghost">{t("how")}</Link></div>
             <ul className="mt-8 grid gap-3 text-sm sm:grid-cols-3">{trust.map(([I, x], i) => <li key={x} className="animate-fade-up flex items-center gap-2" style={{ animationDelay: `${320 + i * 90}ms` }}><span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand/10"><I className="h-4 w-4 text-brand" aria-hidden /></span>{x}</li>)}</ul>
           </div>
-          <div className="relative mx-auto grid h-[340px] w-full max-w-sm place-items-center md:h-[380px]" aria-hidden>
-            <div className="absolute inset-4 rounded-[40px] bg-gradient-to-br from-soft to-white" />
-            <div className="animate-float relative h-[300px] w-[160px] rounded-[28px] border-[6px] border-ink bg-white p-3 shadow-xl md:h-[330px] md:w-[176px]">
-              <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-line" />
-              <div className="mb-3 h-7 rounded-lg bg-soft" />
-              {(categories.length ? categories.slice(0, 3).map((c) => c.name) : ["Streaming", "AI Tools", "Gift Cards"]).map((name, i) => (
-                <div key={name} className={`animate-slide-in mb-2 flex items-center gap-2 rounded-xl p-2.5 text-xs font-medium ${i === 0 ? "bg-brand text-white" : "bg-soft"}`} style={{ animationDelay: `${500 + i * 150}ms` }}>
-                  <span className={`h-5 w-5 shrink-0 rounded-md ${i === 0 ? "bg-white/30" : "bg-brand/15"}`} /><span className="truncate">{name}</span></div>))}
-              <div className="animate-ring absolute inset-x-3 bottom-3 grid h-9 place-items-center rounded-xl bg-brand text-xs font-semibold text-white">{t("buyNow")}</div>
-            </div>
+          <div className="relative mx-auto grid h-[470px] w-full max-w-sm place-items-center md:h-[500px]">
+            <div className="absolute inset-3 rounded-[40px] bg-gradient-to-br from-soft to-white" aria-hidden />
+            <div className="animate-fade-up relative [animation-delay:200ms]"><PhoneDemo /></div>
             {(["Tv", "Sparkles", "Gift", "Gamepad2"] as const).map((n, i) => (
-              <div key={n} className="animate-float absolute grid h-11 w-11 place-items-center rounded-2xl border border-line bg-white text-brand shadow-md md:h-12 md:w-12"
-                style={{ top: ["4%", "16%", "64%", "78%"][i], left: ["2%", "76%", "0%", "78%"][i], animationDelay: `${i * 600}ms`, animationDuration: `${3.6 + i * 0.5}s` }}><Icon name={n} className="h-5 w-5" /></div>))}
+              <div key={n} className="animate-float absolute grid h-10 w-10 place-items-center rounded-2xl border border-line bg-white text-brand shadow-md md:h-12 md:w-12" aria-hidden
+                style={{ top: ["3%", "14%", "66%", "80%"][i], left: ["0%", "80%", "-2%", "82%"][i], animationDelay: `${i * 600}ms`, animationDuration: `${3.6 + i * 0.5}s` }}><Icon name={n} className="h-5 w-5" /></div>))}
           </div>
         </div>
       </section>

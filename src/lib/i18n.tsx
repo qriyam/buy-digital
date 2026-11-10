@@ -18,6 +18,7 @@ const en = {
   cart: "Cart", cartEmpty: "Your cart is empty", continueShopping: "Continue Shopping", subtotal: "Subtotal", discount: "Discount", total: "Total", toCheckout: "Proceed to Checkout", coupon: "Coupon code", apply: "Apply",
   finalNote: "The final total is calculated on the server before you pay.", checkout: "Checkout", pay: "Pay securely", paying: "Starting payment…", loginToContinue: "Log in to continue", verifyEmail: "Please verify your email address before ordering.", backToCart: "Back to cart",
   login2: "Log in", register: "Create account", email: "Email", password: "Password", confirmPassword: "Confirm password", fullName: "Full name", forgot: "Forgot password?", signUp: "Sign up", google: "Continue with Google", sendReset: "Send reset link",
+  payOk: "Payment successful", payVerified: "Payment verified", orderDelivered: "Order delivered", orderReady: "Your order is ready", emailBody: "Open your order to see your delivery details.", payMethods: "FPX · Cards · E-wallets",
   storeSetup: "The store is being set up. Please check back soon.", notFound: "not found", browse: "Browse products",
 };
 export type Key = keyof typeof en;
@@ -39,6 +40,7 @@ const ms: Record<Key, string> = {
   cart: "Troli", cartEmpty: "Troli anda kosong", continueShopping: "Teruskan Membeli-belah", subtotal: "Jumlah kecil", discount: "Diskaun", total: "Jumlah", toCheckout: "Teruskan ke Pembayaran", coupon: "Kod kupon", apply: "Guna",
   finalNote: "Jumlah akhir dikira di pelayan sebelum anda membayar.", checkout: "Pembayaran", pay: "Bayar dengan selamat", paying: "Memulakan pembayaran…", loginToContinue: "Log masuk untuk teruskan", verifyEmail: "Sila sahkan alamat e-mel anda sebelum membuat pesanan.", backToCart: "Kembali ke troli",
   login2: "Log masuk", register: "Cipta akaun", email: "E-mel", password: "Kata laluan", confirmPassword: "Sahkan kata laluan", fullName: "Nama penuh", forgot: "Lupa kata laluan?", signUp: "Daftar", google: "Teruskan dengan Google", sendReset: "Hantar pautan tetapan semula",
+  payOk: "Pembayaran berjaya", payVerified: "Pembayaran disahkan", orderDelivered: "Pesanan dihantar", orderReady: "Pesanan anda sudah siap", emailBody: "Buka pesanan anda untuk melihat butiran penghantaran.", payMethods: "FPX · Kad · E-dompet",
   storeSetup: "Kedai sedang disediakan. Sila kembali tidak lama lagi.", notFound: "tidak ditemui", browse: "Lihat produk",
 };
 export type Lang = "en" | "ms";
