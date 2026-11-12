@@ -13,12 +13,17 @@ const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-"
 const safe = (n: string) => n.replace(/[^a-zA-Z0-9._-]/g, "_");
 
 export function AdminProducts() {
-  const { data, error } = useFetch(async () => (await db().from("products").select("id,slug,name,delivery_method,is_active,archived_at,categories(name),product_variants(price)").order("name")).data ?? [], []);
+  const { data, error } = useFetch(async () => {
+    const [p, inv] = await Promise.all([db().from("products").select("id,slug,name,delivery_method,is_active,archived_at,categories(name),product_variants(id,price)").order("name"), db().from("inventory_overview").select("variant_id,status")]);
+    const avail = new Map<string, number>(); (inv.data ?? []).forEach((i: any) => { if (i.status === "available") avail.set(i.variant_id, (avail.get(i.variant_id) ?? 0) + 1); });
+    return (p.data ?? []).map((x: any) => ({ ...x, codes: x.product_variants.reduce((a: number, v: any) => a + (avail.get(v.id) ?? 0), 0) }));
+  }, []);
   return (
     <div><div className="flex items-center justify-between"><H>Products</H><Link to="/admin/products/new" className="btn btn-primary">New product</Link></div><Err e={error} />
-      <Table head={["Product", "Category", "Delivery", "Price", "Status", ""]} rows={(data ?? []).map((p: any) => {
+      <Table head={["Product", "Category", "Delivery", "Price", "Stock", "Status", ""]} rows={(data ?? []).map((p: any) => {
         const prices = p.product_variants.map((v: any) => Number(v.price)); return [p.name, p.categories?.name ?? "—", p.delivery_method.replace("_", " "),
           prices.length ? (Math.min(...prices) === Math.max(...prices) ? rm(prices[0]) : `${rm(Math.min(...prices))} – ${rm(Math.max(...prices))}`) : "—",
+          p.delivery_method === "license_key" ? (p.codes > 0 ? `${p.codes} codes` : <span key="s" className="font-semibold text-brand">0 codes: customers cannot buy</span>) : "—",
           p.archived_at ? "Archived" : p.is_active ? "Active" : "Hidden", <Link key="e" className="text-brand" to={`/admin/products/${p.id}`}>Edit</Link>]; })} />
       {!data?.length && <p className="mt-4 text-sm text-mute">No products yet. Create your first product.</p>}</div>
   );
