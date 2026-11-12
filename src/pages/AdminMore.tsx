@@ -4,6 +4,8 @@ import { callFn } from "../lib/supabase";
 import { useFetch } from "../lib/useFetch";
 import { rm } from "../lib/format";
 import { db, Err, H, inp, Table, when } from "./Admin";
+import { SingleImage } from "../components/ImageUpload";
+import { removeImageFile, uploadImage, urlToPath } from "../lib/uploads";
 
 function Bars({ data, money = false, title }: { data: { label: string; value: number }[]; money?: boolean; title: string }) {
   const max = Math.max(1, ...data.map((d) => d.value));
@@ -144,9 +146,26 @@ export function AdminSettings() {
     const r = rows.length ? await db().from("website_settings").upsert(rows, { onConflict: "key" }) : { error: null };
     setMsg(r.error ? "Could not save." : "Saved. Visitors see changes on their next page load."); if (!r.error) { setEdit({}); reload(); }
   };
+  const [busyKey, setBusyKey] = useState<string | null>(null);
+  const setBrand = async (key: string, p: Parameters<typeof uploadImage>[1] | null) => {
+    setBusyKey(key);
+    try {
+      const old = data?.[key] ? urlToPath(data[key]) : null;
+      let url = ""; if (p) { const path = await uploadImage("site", p); url = db().storage.from("buydigital-product-images").getPublicUrl(path).data.publicUrl; }
+      const r = await db().from("website_settings").upsert({ key, value: url, is_public: true, updated_at: new Date().toISOString() }, { onConflict: "key" });
+      if (r.error) throw new Error("Could not save."); await removeImageFile(old); setMsg("Saved. Visitors see it on their next page load."); reload();
+    } catch (x) { setMsg((x as Error).message); }
+    setBusyKey(null);
+  };
+  const brand: [string, string, string, { maxDim: number; keepAlpha: boolean }, string][] = [["site_logo", "Logo", "Shown in the header. A wide transparent PNG works best.", { maxDim: 600, keepAlpha: true }, "h-20 w-40"],
+    ["site_favicon", "Favicon", "Small square icon on the browser tab.", { maxDim: 128, keepAlpha: true }, "h-20 w-20"], ["site_og_image", "Share image", "Shown when your site is shared on WhatsApp, Facebook, etc.", { maxDim: 1200, keepAlpha: false }, "h-20 w-40"]];
   return (
     <form onSubmit={save} className="max-w-2xl"><H>Website Settings</H><Err e={error} /><p className="mt-1 text-sm text-mute">Contact details, social links and page text. Have a lawyer review the policy pages before launch.</p>
-      <div className="mt-5 space-y-4">{fields.map(([k, label, long]) => <label key={k} className="block text-sm font-medium">{label}
+      <h2 className="mt-6 font-semibold">Branding</h2>
+      <div className="mt-3 flex flex-wrap gap-6">{brand.map(([k, label, hint, opts, size]) => <div key={k}><p className="text-sm font-medium">{label}</p><p className="mb-2 max-w-[11rem] text-xs text-mute">{hint}</p>
+        <SingleImage className={size} label={`Add ${label.toLowerCase()}`} url={data?.[k] || null} busy={busyKey === k} opts={opts} onPick={(p) => setBrand(k, p)} onRemove={() => setBrand(k, null)} onError={setMsg} /></div>)}</div>
+      <h2 className="mt-8 font-semibold">Contact and page text</h2>
+      <div className="mt-3 space-y-4">{fields.map(([k, label, long]) => <label key={k} className="block text-sm font-medium">{label}
         {long ? <textarea rows={6} className={`${inp} mt-1 w-full`} value={edit[k] ?? data?.[k] ?? ""} onChange={(e) => setEdit({ ...edit, [k]: e.target.value })} /> : <input className={`${inp} mt-1 w-full`} value={edit[k] ?? data?.[k] ?? ""} onChange={(e) => setEdit({ ...edit, [k]: e.target.value })} />}</label>)}</div>
       <button className="btn btn-primary mt-6">Save settings</button> <span className="ml-3 text-sm" role="status">{msg}</span></form>
   );

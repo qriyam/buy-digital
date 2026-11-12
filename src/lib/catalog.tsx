@@ -15,13 +15,13 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     if (!supabase) return;
     (async () => {
       const [c, p, a, r] = await Promise.all([
-        supabase.from("categories").select("slug,name,description,icon").order("sort_order"),
+        supabase.from("categories").select("slug,name,description,icon,image_path").order("sort_order"),
         supabase.from("products").select("id,slug,name,description,delivery_method,delivery_estimate,validity,instructions,refund_note,is_featured,is_popular,created_at,categories(slug),product_variants(id,label,price,sort_order),product_images(path,sort_order)").order("sort_order").order("created_at", { ascending: false }),
         supabase.from("variant_availability").select("variant_id,in_stock"), supabase.from("product_rating_summary").select("product_id,average,review_count")]);
       if (c.error || p.error) { setError(true); setLoading(false); return; }
       const stock = new Map((a.data ?? []).map((x: any) => [x.variant_id, !!x.in_stock]));
       const rating = new Map((r.data ?? []).map((x: any) => [x.product_id, { avg: Number(x.average), count: x.review_count }]));
-      setCats((c.data ?? []).map((x: any) => ({ slug: x.slug, name: x.name, blurb: x.description ?? "", icon: x.icon ?? "Package" })));
+      setCats((c.data ?? []).map((x: any) => ({ slug: x.slug, name: x.name, blurb: x.description ?? "", icon: x.icon ?? "Package", image: x.image_path ? imageUrl(x.image_path) : undefined })));
       setProducts((p.data ?? []).map((x: any): Product => {
         const vs = [...(x.product_variants ?? [])].sort((m: any, n: any) => m.sort_order - n.sort_order).map((v: any) => ({ id: v.id, label: v.label, price: Number(v.price), inStock: stock.get(v.id) ?? false }));
         const imgs = [...(x.product_images ?? [])].sort((m: any, n: any) => m.sort_order - n.sort_order).map((i: any) => imageUrl(i.path));

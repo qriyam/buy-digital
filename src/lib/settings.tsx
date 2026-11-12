@@ -10,6 +10,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       const o: S = {}; (data ?? []).forEach((r: any) => { o[r.key] = typeof r.value === "string" ? r.value : ""; }); setS(o);
     });
   }, []);
+  useEffect(() => {
+    if (!s.site_favicon) return;
+    let l = document.head.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    if (!l) { l = document.createElement("link"); l.rel = "icon"; document.head.appendChild(l); }
+    l.href = s.site_favicon;
+  }, [s.site_favicon]);
   return <C.Provider value={s}>{children}</C.Provider>;
 }
 export const useSettings = () => useContext(C);

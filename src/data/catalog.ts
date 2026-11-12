@@ -1,5 +1,5 @@
 export type Variant = { id: string; label: string; price: number; inStock: boolean };
-export type Category = { slug: string; name: string; blurb: string; icon: string };
+export type Category = { slug: string; name: string; blurb: string; icon: string; image?: string };
 export type Product = {
   id: string; slug: string; name: string; category: string; blurb: string; description: string;
   delivery: "instant" | "manual"; method: string; available: boolean; featured: boolean; popular: boolean;

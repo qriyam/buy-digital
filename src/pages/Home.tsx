@@ -3,6 +3,7 @@ import { Headphones, ShieldCheck, Zap, BadgeCheck } from "lucide-react";
 import { useCatalog } from "../lib/catalog";
 import { useT } from "../lib/i18n";
 import { Icon } from "../lib/icons";
+import CatIcon from "../components/CatIcon";
 import ProductCard from "../components/ProductCard";
 import ProductSkeleton from "../components/ProductSkeleton";
 import Reveal from "../components/Reveal";
@@ -47,7 +48,7 @@ export default function Home() {
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {categories.map((c) => (
               <Link key={c.slug} to={`/categories/${c.slug}`} className="card lift p-5 hover:border-brand/40">
-                <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand/10 text-brand"><Icon name={c.icon} className="h-5 w-5" /></span>
+                <CatIcon c={c} />
                 <p className="mt-3 font-semibold">{c.name}</p><p className="mt-1 text-sm text-mute">{c.blurb}</p>
                 <p className="mt-3 text-xs text-mute">{count(c.slug)} {count(c.slug) === 1 ? t("productWord") : t("productsWord")}</p>
               </Link>))}

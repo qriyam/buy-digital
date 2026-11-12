@@ -5,6 +5,9 @@ import { useFetch } from "../lib/useFetch";
 import { iconNames } from "../lib/icons";
 import { rm } from "../lib/format";
 import { db, Err, H, inp, Table } from "./Admin";
+import { ImageGrid, SingleImage, type GridImage } from "../components/ImageUpload";
+import type { Prepared } from "../lib/image";
+import { IMAGE_BUCKET, removeImageFile, uploadImage as uploadToBucket } from "../lib/uploads";
 
 const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
 const safe = (n: string) => n.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -33,6 +36,7 @@ export function AdminProductForm() {
     const [p, v, im] = await Promise.all([db().from("products").select("*").eq("id", id).maybeSingle(), db().from("product_variants").select("*").eq("product_id", id).order("sort_order"), db().from("product_images").select("*").eq("product_id", id).order("sort_order")]);
     return { p: p.data, v: v.data ?? [], im: im.data ?? [] };
   }, [id]);
+  const [staged, setStaged] = useState<(Prepared & { id: string })[]>([]), [imgBusy, setImgBusy] = useState(false);
   const [f, setF] = useState<any>(null), [vs, setVs] = useState<V[] | null>(null), [msg, setMsg] = useState(""), [busy, setBusy] = useState(false);
   const form = f ?? (isNew ? { name: "", slug: "", description: "", category_id: "", delivery_method: "manual", delivery_estimate: "", validity: "", instructions: "", refund_note: "", is_active: false, is_featured: false, is_popular: false } : loaded.data?.p);
   const variants: V[] = vs ?? (isNew ? [blankV(0)] : (loaded.data?.v ?? []).map((v: any) => ({ id: v.id, label: v.label, price: String(v.price), is_available: v.is_available, is_active: v.is_active, file_path: v.file_path, download_limit: v.download_limit ?? "", download_expiry_days: v.download_expiry_days ?? "", sort_order: v.sort_order })));
@@ -49,7 +53,7 @@ export function AdminProductForm() {
       const body = { name: form.name.trim(), slug: slugify(form.slug || form.name), description: form.description || null, category_id: form.category_id || null, delivery_method: form.delivery_method,
         delivery_estimate: form.delivery_estimate || null, validity: form.validity || null, instructions: form.instructions || null, refund_note: form.refund_note || null, is_active: form.is_active, is_featured: form.is_featured, is_popular: form.is_popular };
       let pid = id!;
-      if (isNew) { const r = await db().from("products").insert(body).select("id").single(); if (r.error) throw new Error(r.error.message.includes("duplicate") ? "That URL slug is already used." : "Could not create product."); pid = r.data.id; }
+      if (isNew) { const r = await db().from("products").insert(body).select("id").single(); if (r.error) throw new Error(r.error.message.includes("duplicate") ? "That URL slug is already used." : "Could not create product."); pid = r.data.id; for (const [n, st] of staged.entries()) { const path = await uploadToBucket(`products/${pid}`, st); await db().from("product_images").insert({ product_id: pid, path, sort_order: n }); } }
       else { const r = await db().from("products").update(body).eq("id", pid); if (r.error) throw new Error("Could not save product."); }
       const keep: string[] = [];
       for (const [i, v] of variants.entries()) {
@@ -63,15 +67,25 @@ export function AdminProductForm() {
     } catch (x) { setMsg((x as Error).message); }
     setBusy(false);
   };
-  const uploadImage = async (file: File | undefined) => {
-    if (!file || isNew) return;
-    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 2_000_000) { setMsg("Images must be PNG, JPEG or WebP under 2 MB."); return; }
-    const path = `${id}/${Date.now()}-${safe(file.name)}`;
-    const up = await db().storage.from("buydigital-product-images").upload(path, file, { contentType: file.type });
-    if (up.error) { setMsg("Upload failed."); return; }
-    await db().from("product_images").insert({ product_id: id, path, sort_order: (loaded.data?.im.length ?? 0) }); loaded.reload();
+  const publicUrl = (path: string) => db().storage.from(IMAGE_BUCKET).getPublicUrl(path).data.publicUrl;
+  const addImages = async (items: Prepared[]) => {
+    setMsg("");
+    if (isNew) { setStaged([...staged, ...items.map((p) => ({ ...p, id: p.preview }))]); return; }   // saved together with the product
+    setImgBusy(true);
+    try { let n = (loaded.data?.im.length ?? 0); for (const p of items) { const path = await uploadToBucket(`products/${id}`, p); await db().from("product_images").insert({ product_id: id, path, sort_order: n++ }); } loaded.reload(); }
+    catch (x) { setMsg((x as Error).message); }
+    setImgBusy(false);
   };
-  const removeImage = async (im: any) => { await db().storage.from("buydigital-product-images").remove([im.path]); await db().from("product_images").delete().eq("id", im.id); loaded.reload(); };
+  const removeImage = async (g: GridImage) => {
+    if (g.staged) { setStaged(staged.filter((x) => x.id !== g.id)); return; }
+    const im = (loaded.data?.im ?? []).find((x: any) => x.id === g.id); if (!im) return;
+    await removeImageFile(im.path); await db().from("product_images").delete().eq("id", im.id); loaded.reload();
+  };
+  const makeMain = async (g: GridImage) => {
+    if (g.staged) { const st = staged.find((x) => x.id === g.id)!; setStaged([st, ...staged.filter((x) => x.id !== g.id)]); return; }
+    const first = Math.min(...(loaded.data?.im ?? []).map((x: any) => x.sort_order)); await db().from("product_images").update({ sort_order: first - 1 }).eq("id", g.id); loaded.reload();
+  };
+  const gridImages: GridImage[] = isNew ? staged.map((x) => ({ id: x.id, url: x.preview, staged: true })) : (loaded.data?.im ?? []).map((x: any) => ({ id: x.id, url: publicUrl(x.path) }));
   const uploadFile = async (i: number, file: File | undefined) => {
     if (!file || isNew) return; if (file.size > 50_000_000) { setMsg("Files must be under 50 MB."); return; }
     const path = `${id}/${Date.now()}-${safe(file.name)}`;
@@ -112,11 +126,10 @@ export function AdminProductForm() {
           {form.delivery_method === "license_key" && <p className="mt-2 text-mute">Stock comes from the codes you upload in Digital Inventory.</p>}</div>))}</div>
       <button type="button" className="btn btn-ghost mt-3" onClick={() => setVs([...variants, blankV(variants.length)])}>Add option</button>
 
-      {!isNew && <><h2 className="mt-8 font-semibold">Images</h2><div className="mt-3 flex flex-wrap gap-3">{(loaded.data?.im ?? []).map((im: any) => (
-        <div key={im.id} className="text-center text-xs"><img src={db().storage.from("buydigital-product-images").getPublicUrl(im.path).data.publicUrl} alt="" className="h-20 w-20 rounded-lg border border-line object-contain" />
-          <button type="button" className="mt-1 text-brand" onClick={() => removeImage(im)}>Remove</button></div>))}</div>
-        <input type="file" accept="image/png,image/jpeg,image/webp" className="mt-3 text-sm" onChange={(e) => uploadImage(e.target.files?.[0])} /></>}
-      {isNew && <p className="mt-6 text-sm text-mute">Save first, then add images and files.</p>}
+      <h2 className="mt-8 font-semibold">Photos</h2>
+      <p className="text-sm text-mute">Tap the + to choose photos from your gallery. The first photo is the main one. Photos are resized automatically.</p>
+      <ImageGrid images={gridImages} onPick={addImages} onRemove={removeImage} onMakeMain={makeMain} onError={setMsg} busy={imgBusy} />
+      {isNew && <p className="mt-4 text-sm text-mute">Downloadable files can be attached after the first save.</p>}
 
       <div className="mt-8 flex flex-wrap items-center gap-3"><button className="btn btn-primary" disabled={busy}>{busy ? "Saving…" : "Save product"}</button>
         {!isNew && (loaded.data?.p?.archived_at ? <button type="button" className="btn btn-ghost" onClick={restore}>Restore</button> : <button type="button" className="btn btn-ghost" onClick={archive}>Archive</button>)}
@@ -127,22 +140,35 @@ export function AdminProductForm() {
 
 export function AdminCategories() {
   const { data, reload, error } = useFetch(async () => (await db().from("categories").select("*").order("sort_order")).data ?? [], []);
-  const [msg, setMsg] = useState("");
+  const [msg, setMsg] = useState(""), [newImg, setNewImg] = useState<Prepared | null>(null), [busyId, setBusyId] = useState<string | null>(null);
+  const publicUrl = (path: string) => db().storage.from(IMAGE_BUCKET).getPublicUrl(path).data.publicUrl;
   const patch = async (id: string, p: object) => { const r = await db().from("categories").update(p).eq("id", id); setMsg(r.error ? "Update failed." : ""); reload(); };
   const move = async (i: number, d: number) => { const a = data![i], b = data![i + d]; if (!b) return; await Promise.all([patch(a.id, { sort_order: b.sort_order }), patch(b.id, { sort_order: a.sort_order })]); };
+  const setImage = async (c: any, p: Prepared | null) => {
+    setBusyId(c.id);
+    try { const path = p ? await uploadToBucket("categories", p) : null; await patch(c.id, { image_path: path }); await removeImageFile(c.image_path ?? null); } catch (x) { setMsg((x as Error).message); }
+    setBusyId(null);
+  };
   const create = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); const fd = new FormData(e.currentTarget); const name = String(fd.get("name")).trim();
-    const r = await db().from("categories").insert({ name, slug: slugify(String(fd.get("slug")) || name), description: String(fd.get("description")) || null, icon: String(fd.get("icon")), sort_order: (data?.length ?? 0) + 1 });
-    setMsg(r.error ? "Could not create (duplicate slug?)." : "Created."); if (!r.error) { e.currentTarget.reset(); reload(); }
+    e.preventDefault(); const form = e.currentTarget; const fd = new FormData(form); const name = String(fd.get("name")).trim();
+    try {
+      const image_path = newImg ? await uploadToBucket("categories", newImg) : null;
+      const r = await db().from("categories").insert({ name, slug: slugify(String(fd.get("slug")) || name), description: String(fd.get("description")) || null, icon: String(fd.get("icon")), image_path, sort_order: (data?.length ?? 0) + 1 });
+      setMsg(r.error ? "Could not create (duplicate slug?)." : "Created."); if (!r.error) { form.reset(); setNewImg(null); reload(); }
+    } catch (x) { setMsg((x as Error).message); }
   };
   return (
     <div><H>Categories</H><Err e={error} /><p className="mt-1 text-sm text-mute" role="status">{msg}</p>
-      <form onSubmit={create} className="card mt-4 grid max-w-3xl gap-3 p-4 sm:grid-cols-4"><input name="name" required placeholder="Name" className={inp} aria-label="Name" /><input name="slug" placeholder="slug (auto)" className={inp} aria-label="Slug" />
-        <select name="icon" className={inp} aria-label="Icon">{iconNames.map((n) => <option key={n}>{n}</option>)}</select><input name="description" placeholder="Short description" className={inp} aria-label="Description" /><button className="btn btn-primary sm:col-span-4">Add category</button></form>
+      <form onSubmit={create} className="card mt-4 flex max-w-3xl flex-wrap items-start gap-4 p-4">
+        <SingleImage url={newImg?.preview} onPick={setNewImg} onRemove={() => setNewImg(null)} onError={setMsg} opts={{ maxDim: 400, keepAlpha: true }} label="Add picture" />
+        <div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-2"><input name="name" required placeholder="Name" className={inp} aria-label="Name" /><input name="slug" placeholder="slug (auto)" className={inp} aria-label="Slug" />
+          <select name="icon" className={inp} aria-label="Icon (used when there is no picture)">{iconNames.map((n) => <option key={n}>{n}</option>)}</select><input name="description" placeholder="Short description" className={inp} aria-label="Description" />
+          <button className="btn btn-primary sm:col-span-2">Add category</button></div></form>
       <div className="mt-5 space-y-2">{(data ?? []).map((c: any, i: number) => (
         <div key={c.id} className="card flex flex-wrap items-center gap-3 p-3 text-sm">
+          <SingleImage className="h-16 w-16" label="Picture" url={c.image_path ? publicUrl(c.image_path) : null} busy={busyId === c.id} onPick={(p) => setImage(c, p)} onRemove={() => setImage(c, null)} onError={setMsg} opts={{ maxDim: 400, keepAlpha: true }} />
           <input className={`${inp} w-44`} defaultValue={c.name} onBlur={(e) => e.target.value !== c.name && patch(c.id, { name: e.target.value })} aria-label="Name" />
-          <select className={inp} value={c.icon ?? "Package"} onChange={(e) => patch(c.id, { icon: e.target.value })} aria-label="Icon">{iconNames.map((n) => <option key={n}>{n}</option>)}</select>
+          <select className={inp} value={c.icon ?? "Package"} onChange={(e) => patch(c.id, { icon: e.target.value })} aria-label="Icon (used when there is no picture)">{iconNames.map((n) => <option key={n}>{n}</option>)}</select>
           <input className={`${inp} min-w-0 flex-1`} defaultValue={c.description ?? ""} onBlur={(e) => e.target.value !== (c.description ?? "") && patch(c.id, { description: e.target.value })} aria-label="Description" />
           <label><input type="checkbox" checked={c.is_active} onChange={(e) => patch(c.id, { is_active: e.target.checked })} /> Active</label>
           <button disabled={i === 0} onClick={() => move(i, -1)} className="px-2 disabled:opacity-30" aria-label="Move up">↑</button><button disabled={i === data!.length - 1} onClick={() => move(i, 1)} className="px-2 disabled:opacity-30" aria-label="Move down">↓</button></div>))}</div></div>

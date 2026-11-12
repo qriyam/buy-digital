@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useSettings } from "./settings";
 
 const SITE = "https://buydigital.my";
 function setMeta(attr: "name" | "property", key: string, content: string) {
@@ -8,6 +9,8 @@ function setMeta(attr: "name" | "property", key: string, content: string) {
 }
 // Sets title, description, canonical, Open Graph and optional JSON-LD for the current page.
 export default function Seo({ title, description, path, image, jsonLd, noindex }: { title: string; description: string; path: string; image?: string; jsonLd?: object; noindex?: boolean }) {
+  const { site_og_image } = useSettings();
+  const shareImage = image ?? site_og_image;
   useEffect(() => {
     const full = title.includes("BuyDigital") ? title : `${title} | BuyDigital`;
     document.title = full;
@@ -15,7 +18,7 @@ export default function Seo({ title, description, path, image, jsonLd, noindex }
     setMeta("name", "robots", noindex ? "noindex, nofollow" : "index, follow");
     setMeta("property", "og:title", full); setMeta("property", "og:description", description.slice(0, 200));
     setMeta("property", "og:type", "website"); setMeta("property", "og:url", SITE + path); setMeta("property", "og:site_name", "BuyDigital");
-    if (image) setMeta("property", "og:image", image);
+    if (shareImage) setMeta("property", "og:image", shareImage);
     let link = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     if (!link) { link = document.createElement("link"); link.rel = "canonical"; document.head.appendChild(link); }
     link.href = SITE + path;
@@ -23,6 +26,6 @@ export default function Seo({ title, description, path, image, jsonLd, noindex }
     if (jsonLd) { if (!ld) { ld = document.createElement("script"); ld.id = "ld-json"; (ld as HTMLScriptElement).type = "application/ld+json"; document.head.appendChild(ld); } ld.textContent = JSON.stringify(jsonLd); }
     else ld?.remove();
     return () => { document.getElementById("ld-json")?.remove(); };
-  }, [title, description, path, image, jsonLd, noindex]);
+  }, [title, description, path, shareImage, jsonLd, noindex]);
   return null;
 }
