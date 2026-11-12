@@ -2,7 +2,15 @@ export class HttpError extends Error {
   constructor(public status: number, public code: string) { super(code); }
 }
 
-const allowed = () => (Deno.env.get("BUYDIGITAL_ALLOWED_ORIGINS") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+// Always-trusted origins (our own sites), plus anything in BUYDIGITAL_ALLOWED_ORIGINS.
+// Entries may be exact origins or wildcards like https://*.hiplastics.my
+const DEFAULT_ORIGINS = ["https://buydigital.my", "https://www.buydigital.my", "https://*.hiplastics.my", "https://hiplastics.my", "http://localhost:5173"];
+const allowed = () => [...DEFAULT_ORIGINS, ...(Deno.env.get("BUYDIGITAL_ALLOWED_ORIGINS") ?? "").split(",").map((s) => s.trim()).filter(Boolean)];
+const originOk = (origin: string) => allowed().some((a) => {
+  if (!a.includes("*")) return a === origin;
+  const re = new RegExp("^" + a.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[a-z0-9-]+") + "$", "i");
+  return re.test(origin);
+});
 
 function cors(req: Request): Record<string, string> {
   const origin = req.headers.get("origin") ?? "";
@@ -10,7 +18,7 @@ function cors(req: Request): Record<string, string> {
     "Vary": "Origin", "Access-Control-Allow-Headers": "authorization, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS", "Cache-Control": "no-store",
   };
-  if (allowed().includes(origin)) h["Access-Control-Allow-Origin"] = origin;
+  if (origin && originOk(origin)) h["Access-Control-Allow-Origin"] = origin;
   return h;
 }
 

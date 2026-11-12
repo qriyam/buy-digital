@@ -9,7 +9,8 @@ export async function callFn<T>(name: string, body: unknown): Promise<T> {
   if (!supabase) throw new Error("backend_not_configured");
   const { data, error } = await supabase.functions.invoke(name, { body: body as Record<string, unknown> });
   if (error) {
-    let code = "server_error";
+    // Fetch failed before any response (CORS block / offline) => no JSON body to read.
+    let code = (error as any).name === "FunctionsFetchError" ? "network_or_cors_blocked" : "server_error";
     try { code = (await (error as any).context.json()).error ?? code; } catch { /* keep default */ }
     throw new Error(code);
   }
