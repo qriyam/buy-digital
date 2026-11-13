@@ -28,9 +28,11 @@ export async function createBill(p: {
     billPaymentChannel: Deno.env.get("BUYDIGITAL_TOYYIBPAY_PAYMENT_CHANNEL") ?? "0",  // 0 = FPX, 1 = card, 2 = both
   });
   const r = await fetch(`${host()}/index.php/api/createBill`, { method: "POST", body });
-  const j = await r.json().catch(() => null);
-  const code = Array.isArray(j) ? j[0]?.BillCode : undefined;
-  if (!r.ok || !code) throw new Error(`toyyibpay createBill failed: ${JSON.stringify(j)}`);
+  const text = await r.text();
+  let j: unknown = null;
+  try { j = JSON.parse(text); } catch { /* non-JSON error body */ }
+  const code = Array.isArray(j) ? (j[0] as { BillCode?: string })?.BillCode : undefined;
+  if (!r.ok || !code) throw new Error(`toyyibpay createBill failed: http ${r.status} host=${host()} body=${text.slice(0, 300)}`);
   return { billCode: code, url: `${host()}/${code}` };
 }
 
