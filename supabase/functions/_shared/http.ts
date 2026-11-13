@@ -15,7 +15,7 @@ const originOk = (origin: string) => allowed().some((a) => {
 function cors(req: Request): Record<string, string> {
   const origin = req.headers.get("origin") ?? "";
   const h: Record<string, string> = {
-    "Vary": "Origin", "Access-Control-Allow-Headers": "authorization, content-type",
+    "Vary": "Origin", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS", "Cache-Control": "no-store",
   };
   if (origin && originOk(origin)) h["Access-Control-Allow-Origin"] = origin;
